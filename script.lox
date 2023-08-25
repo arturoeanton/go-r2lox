@@ -67,3 +67,29 @@ fun hola(a,b,c) {
     return (a+b)*c;
 }
 print hola(2,3,"A");
+
+
+fun fib(n1) {
+    if (n1 <= 1) {
+        return n1;
+    }
+    return fib(n1-1) + fib(n1-2);
+}
+
+for (var i = 0; i < 10; i = i + 1){
+    print fib(i);
+}
+
+print "-----------------";
+fun makeCounter() { 
+	var i = 0;
+	fun count() {
+	i = i + 1;
+	print i; 
+	}
+	return count; 
+}
+var counter = makeCounter(); 
+counter(); // "1". 
+counter(); // "2".
+counter(); // "3".

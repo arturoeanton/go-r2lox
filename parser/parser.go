@@ -266,7 +266,7 @@ func (p *Parser) Function(kind string) Stmt {
 	p.consume(lexer.LEFT_BRACE, "Expect '{' before "+kind+" body.")
 
 	body := p.Block()
-	return Function{Name: name, Parameters: parameters, Body: body}
+	return Function{Name: name, Parameters: parameters, Body: body, Closure: nil}
 }
 
 func (p *Parser) VarDeclaration() Stmt {

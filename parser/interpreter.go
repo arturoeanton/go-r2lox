@@ -51,12 +51,11 @@ func (i *Interpreter) execute(stmt Stmt) interface{} {
 }
 
 func (i *Interpreter) VisitReturnStmt(stmt Return) interface{} {
-	var value interface{}
+	var result interface{}
 	if stmt.Value != nil {
-		value = i.evaluate(stmt.Value)
-		return value
+		result = i.evaluate(stmt.Value)
 	}
-	panic("return")
+	panic(Return{Keyword: stmt.Keyword, Value: stmt.Value, Result: result})
 }
 
 func (i *Interpreter) VisitFunctionStmt(stmt Function) interface{} {
@@ -64,6 +63,7 @@ func (i *Interpreter) VisitFunctionStmt(stmt Function) interface{} {
 		Name:       stmt.Name,
 		Parameters: stmt.Parameters,
 		Body:       stmt.Body,
+		Closure:    i.enviroment,
 	}
 	i.enviroment.Define(stmt.Name.Lexeme, function)
 	return nil
@@ -120,16 +120,17 @@ func (i *Interpreter) VisitLogicalExpr(expr Logical) interface{} {
 
 func (i *Interpreter) executeBlock(stmts []Stmt, enviroment Enviroment) interface{} {
 	previous := i.enviroment
+	defer func() {
+		i.enviroment = previous
+	}()
 	i.enviroment = &enviroment
-	var result interface{}
 	for _, stmt := range stmts {
 		if stmt == nil {
 			continue
 		}
-		result = i.execute(stmt)
+		i.execute(stmt)
 	}
-	i.enviroment = previous
-	return result
+	return nil
 }
 
 func (i *Interpreter) VisitBlockStmt(stmt Block) interface{} {

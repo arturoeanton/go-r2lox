@@ -191,6 +191,7 @@ func (b Block) AcceptStmt(visitor Visitor) interface{} {
 type Return struct {
 	Keyword lexer.Token
 	Value   Expr
+	Result  interface{}
 }
 
 func (r Return) AcceptStmt(visitor Visitor) interface{} {
@@ -228,6 +229,7 @@ type Function struct {
 	Name       lexer.Token
 	Parameters []lexer.Token
 	Body       []Stmt
+	Closure    *Enviroment
 }
 
 func (f Function) AcceptStmt(visitor Visitor) interface{} {
@@ -235,25 +237,34 @@ func (f Function) AcceptStmt(visitor Visitor) interface{} {
 }
 
 func (f Function) Call(i *Interpreter, arguments []interface{}) interface{} {
-	enviroment := NewEnviroment(i.enviroment)
-	for index, param := range f.Parameters {
-		enviroment.Define(param.Lexeme, arguments[index])
+
+	enviroment := NewEnviroment(f.Closure)
+	for i, param := range f.Parameters {
+		enviroment.Define(param.Lexeme, arguments[i])
 	}
-	defer func() {
-		if r := recover(); r != nil {
-			if r == "return" {
-				return
+
+	var value interface{}
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				return_result, ok := r.(Return)
+				if ok {
+					value = return_result.Result
+					return
+				}
+
+				if r == "break" {
+					return
+				}
+				if r == "continue" {
+					return
+				}
+				panic(r)
 			}
-			if r == "break" {
-				return
-			}
-			if r == "continue" {
-				return
-			}
-			panic(r)
-		}
+		}()
+		value = i.executeBlock(f.Body, *enviroment)
 	}()
-	value := i.executeBlock(f.Body, *enviroment)
+
 	return value
 }
 
