@@ -289,6 +289,23 @@ func (i *Interpreter) VisitVar(stmt Var) interface{} {
 	return nil
 }
 
+func (i *Interpreter) VisitArray(expr Array) interface{} {
+	var values []interface{}
+	for _, value := range expr.Initializer {
+		values = append(values, i.evaluate(value))
+	}
+	return values
+}
+
+func (i *Interpreter) VisitMap(expr Map) interface{} {
+	var values map[interface{}]interface{}
+	values = make(map[interface{}]interface{})
+	for key, value := range expr.Initializer {
+		values[i.evaluate(key)] = i.evaluate(value)
+	}
+	return values
+}
+
 func (i *Interpreter) VisitVariableExpr(expr Var) interface{} {
 	return i.enviroment.Get(expr.Name.Lexeme)
 }

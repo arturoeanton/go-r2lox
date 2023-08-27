@@ -294,6 +294,18 @@ func (p *Parser) Declaration() Stmt {
 		return p.VarDeclaration()
 	}
 
+	/*if p.match(lexer.CONST) {
+		return p.ConstDeclaration()
+	}
+
+	if p.match(lexer.LET) {
+		return p.LetDeclaration()
+	}
+
+	if p.match(lexer.CLASS) {
+		return p.ClassDeclaration()
+	}*/
+
 	return p.Statement()
 }
 
@@ -330,6 +342,20 @@ func (p *Parser) VarDeclaration() Stmt {
 
 	p.consume(lexer.SEMICOLON, "Expect ';' after variable declaration.")
 	return Var{Name: name, Initializer: initializer}
+}
+
+func (p *Parser) ArrayDeclaration() Stmt {
+	name := p.consume(lexer.IDENTIFIER, "Expect array name.")
+
+	p.consume(lexer.LEFT_BRACKET, "Expect '[' before array body.")
+
+	initializers := []Expr{}
+
+	p.consume(lexer.RIGHT_BRACKET, "Expect ']' after array body.")
+
+	p.consume(lexer.SEMICOLON, "Expect ';' after array declaration.")
+	return Array{Name: name, Initializer: initializers}
+
 }
 
 func (p *Parser) Statement() Stmt {
