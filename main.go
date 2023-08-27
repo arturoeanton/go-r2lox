@@ -65,6 +65,7 @@ func main() {
 		//runPrompt()
 		source := `
 		var i =1;
+		var map1{} = {a:1,b:2};
 		var j = |2-5- (10%90)|;
 		println(j);
 		`
