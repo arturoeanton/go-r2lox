@@ -1,41 +1,41 @@
 
 var j = 0;
 while ( j < 4 ) {
-    print j;
+    println(j);
     j = j + 1;
 }
 for (var i = 0; i < 4; i = i + 1){
-    print i;
+    println(i);
 } 
 
 if (true or false) {
-    print "if true";
+    println("if true");
 }else {
-    print "no if true";
+    println("no if true");
 }
 
 
-print "hi" or 2; // hi
-print nil or "yes"; // yes
+println("hi" or 2; // h)i
+println(nil or "yes"; // ye)s
 
-print "hi" and 2;  // 2
-print nil and "yes"; // nil
+println("hi" and 2;  // )2
+println(nil and "yes"; // ni)l
 
-print "-----------------";
-print "Table OR";
-print true or true; // true
-print true or false; // true
-print  false or true; // true
-print false or false; // false
+println("-----------------");
+println("Table OR");
+println(true or true; // tru)e
+println(true or false; // tru)e
+println( false or true; // tru)e
+println(false or false; // fals)e
 
 
-print "Table AND"; 
-print true and true; // true
-print true and false; // false
-print  false and true; // false
-print false and false; // false
+println("Table AND";) 
+println(true and true; // tru)e
+println(true and false; // fals)e
+println( false and true; // fals)e
+println(false and false; // fals)e
 
-print "-----------------";
+println("-----------------");
 
 
 		
@@ -48,25 +48,25 @@ var c = "global c";
     var b = "outer b";
     {
         var a = "inner a"; 
-        print a;
-        print b;
-        print c;
+        println(a);
+        println(b);
+        println(c);
     }
-    print a; 
-    print b; 
-    print c;
+    println(a;) 
+    println(b;) 
+    println(c);
 }
-print a; 
-print b; 
-print c;
+println(a;) 
+println(b;) 
+println(c);
 
-print "test fun";
+println("test fun");
 
 fun hola(a,b,c) {
-    print "estoy en una funcion";
+    println("estoy en una funcion");
     return (a+b)*c;
 }
-print hola(2,3,"A");
+println(hola(2,3,"A"));
 
 
 fun fib(n1) {
@@ -77,15 +77,15 @@ fun fib(n1) {
 }
 
 for (var i = 0; i < 10; i = i + 1){
-    print fib(i);
+    println(fib(i));
 }
 
-print "-----------------";
+println("-----------aa------");
 fun makeCounter() { 
 	var i = 0;
 	fun count() {
 	i = i + 1;
-	print i; 
+	println(i); 
 	}
 	return count; 
 }

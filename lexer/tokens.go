@@ -8,50 +8,86 @@ type TokenType int
 
 const (
 	// Single-character tokens.
-	LEFT_PAREN TokenType = iota
-	RIGHT_PAREN
-	LEFT_BRACE
-	RIGHT_BRACE
-	COMMA
-	DOT
-	MINUS
-	PLUS
-	SEMICOLON
-	SLASH
-	STAR
+	LEFT_PAREN    TokenType = iota //[ok]
+	RIGHT_PAREN                    //[ok]
+	LEFT_BRACE                     //[ok]
+	RIGHT_BRACE                    //[ok]
+	LEFT_BRACKET                   //[]
+	RIGHT_BRACKET                  //[]
+	COMMA                          //[ok]
+	DOT                            //[]
+	MINUS                          //[ok]
+	PLUS                           //[ok]
+	SEMICOLON                      //[ok]
+	SLASH                          //[ok]
+	STAR                           //[ok]
+	PERCENT                        //[]
+	COLON                          //[]
+	QUESTION                       //[]
+	CARET                          //[]
+	AMPERSAND                      //[]
 
 	// One or two character tokens.
-	BANG
-	BANG_EQUAL
-	EQUAL
-	EQUAL_EQUAL
-	GREATER
-	GREATER_EQUAL
-	LESS
-	LESS_EQUAL
+	BANG          //[ok]
+	BANG_EQUAL    //[ok]
+	EQUAL         //[ok]
+	EQUAL_EQUAL   //[ok]
+	GREATER       //[ok]
+	GREATER_EQUAL //[ok]
+	LESS          //[ok]
+	LESS_EQUAL    //[ok]
+	PLUS_PLUS     //[ok]
+	MINUS_MINUS   //[ok]
+	STAR_STAR     //[ok]
+	ARROW         //[]
+	LEFT          //[]
+	RIGHT         //[]
+	PIPE          //[OK] ABS
+	OR_OR         //[]
+	AND_AND       //[]
 
 	// Literals.
-	IDENTIFIER
-	STRING
-	NUMBER
+	IDENTIFIER //[ok]
+	STRING     //[ok]
+	NUMBER     //[ok]
 
 	// Keywords.
-	AND
-	CLASS
-	ELSE
-	FALSE
-	FUN
-	FOR
-	IF
-	NIL
-	OR
-	PRINT
-	RETURN
-	SUPER
-	THIS
-	TRUE
-	VAR
-	WHILE
+	AND        //[ok]
+	CLASS      //[]
+	ARRAY      //[]
+	MAP        //[]
+	MOD        //[]
+	NOT        //[]
+	TRY        //[]
+	CATCH      //[]
+	FINALLY    //[]
+	THROW      //[]
+	ADD        //[]
+	DELETE     //[]
+	TYPEOF     //[]
+	INSTANCEOF //[]
+	EXTENDS    //[]
+	SWITCH     //[]
+	CASE       //[]
+	DEFAULT    //[]
+	DO         //[]
+	ELSE       //[ok]
+	FALSE      //[ok]
+	FUN        //[ok]
+	IF         //[ok]
+	NIL        //[ok]
+	OR         //[ok]
+	RETURN     //[ok]
+	SUPER      //[]
+	THIS       //[]
+	TRUE       //[ok]
+	VAR        //[ok]
+	LET        //[]
+	CONST      //[]
+	WHILE      //[ok]
+	FOR        //[ok]
+	BREAK      //[]
+	CONTINUE   //[]
 
 	EOF
 )

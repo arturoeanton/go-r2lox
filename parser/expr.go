@@ -13,6 +13,7 @@ type Stmt interface {
 type Visitor interface {
 	VisitBinaryExpr(expr Binary) interface{}
 	VisitGroupingExpr(expr Grouping) interface{}
+	VisitGroupingABSExpr(expr GroupingABS) interface{}
 	VisitLiteralExpr(expr Literal) interface{}
 	VisitUnaryExpr(expr Unary) interface{}
 	VisitAssignExpr(stmt Assign) interface{}
@@ -20,7 +21,7 @@ type Visitor interface {
 	VisitCallExpr(expr Call) interface{}
 
 	VisitExpressionStmt(stmt Expression) interface{}
-	VisitPrint(stmt Print) interface{}
+	//VisitPrint(stmt Print) interface{}
 	VisitVar(stmt Var) interface{}
 	VisitVariableExpr(expr Var) interface{}
 	VisitBlockStmt(stmt Block) interface{}
@@ -48,6 +49,14 @@ func (g Grouping) AcceptExpr(visitor Visitor) interface{} {
 	return visitor.VisitGroupingExpr(g)
 }
 
+type GroupingABS struct {
+	Expression Expr
+}
+
+func (g GroupingABS) AcceptExpr(visitor Visitor) interface{} {
+	return visitor.VisitGroupingABSExpr(g)
+}
+
 type Literal struct {
 	Value interface{}
 }
@@ -58,7 +67,7 @@ func (l Literal) AcceptExpr(visitor Visitor) interface{} {
 
 type Unary struct {
 	Operator lexer.Token
-	Right    Expr
+	Value    Expr
 }
 
 func (u Unary) AcceptExpr(visitor Visitor) interface{} {
@@ -81,13 +90,13 @@ func (c Condition) AcceptStmt(visitor Visitor) interface{} {
 	return visitor
 }
 
-type Print struct {
+/*type Print struct {
 	Expression Expr
 }
 
 func (p Print) AcceptStmt(visitor Visitor) interface{} {
 	return visitor.VisitPrint(p)
-}
+}*/
 
 type Var struct {
 	Name        lexer.Token

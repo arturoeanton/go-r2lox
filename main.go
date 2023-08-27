@@ -64,17 +64,10 @@ func main() {
 	} else {
 		//runPrompt()
 		source := `
-	
-
-		fun fib(n) {
-			print n;
-			if (n <= 1) return n;
-			var r = fib(n - 1) + fib(n - 2);
-			return r;
-		}
-		var f = fib(6); //13
-		print f;
-`
+		var i =1;
+		var j = |2-5- (10%90)|;
+		println(j);
+		`
 		run(source)
 	}
 

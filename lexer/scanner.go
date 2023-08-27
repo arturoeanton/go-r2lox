@@ -7,22 +7,42 @@ import (
 )
 
 var keywords = map[string]TokenType{
-	"and":    AND,
-	"class":  CLASS,
-	"else":   ELSE,
-	"false":  FALSE,
-	"for":    FOR,
-	"fun":    FUN,
-	"if":     IF,
-	"nil":    NIL,
-	"or":     OR,
-	"print":  PRINT,
-	"return": RETURN,
-	"super":  SUPER,
-	"this":   THIS,
-	"true":   TRUE,
-	"var":    VAR,
-	"while":  WHILE,
+	"and":        AND,
+	"class":      CLASS,
+	"else":       ELSE,
+	"false":      FALSE,
+	"for":        FOR,
+	"fun":        FUN,
+	"if":         IF,
+	"nil":        NIL,
+	"or":         OR,
+	"return":     RETURN,
+	"super":      SUPER,
+	"this":       THIS,
+	"true":       TRUE,
+	"var":        VAR,
+	"while":      WHILE,
+	"break":      BREAK,
+	"continue":   CONTINUE,
+	"array":      ARRAY,
+	"map":        MAP,
+	"mod":        MOD,
+	"not":        NOT,
+	"try":        TRY,
+	"catch":      CATCH,
+	"finally":    FINALLY,
+	"throw":      THROW,
+	"add":        ADD,
+	"delete":     DELETE,
+	"typeof":     TYPEOF,
+	"instanceof": INSTANCEOF,
+	"switch":     SWITCH,
+	"case":       CASE,
+	"default":    DEFAULT,
+	"do":         DO,
+	"extends":    EXTENDS,
+	"let":        LET,
+	"const":      CONST,
 }
 
 type Scanner struct {
@@ -61,6 +81,8 @@ func (s *Scanner) isAtEnd() bool {
 func (s *Scanner) scanToken() {
 	c := s.advance()
 	switch c {
+	case '%':
+		s.addToken(PERCENT, "%")
 	case '(':
 		s.addToken(LEFT_PAREN, "(")
 	case ')':
@@ -69,18 +91,52 @@ func (s *Scanner) scanToken() {
 		s.addToken(LEFT_BRACE, "{")
 	case '}':
 		s.addToken(RIGHT_BRACE, "}")
+	case '[':
+		s.addToken(LEFT_BRACKET, "[")
+	case ']':
+		s.addToken(RIGHT_BRACKET, "]")
+	case ':':
+		s.addToken(COLON, ":")
+	case '?':
+		s.addToken(QUESTION, "?")
+	case '^':
+		s.addToken(CARET, "^")
+	case '|':
+		if s.match('|') {
+			s.addToken(OR_OR, "||")
+		} else {
+			s.addToken(PIPE, "|")
+		}
+	case '&':
+		if s.match('&') {
+			s.addToken(AND_AND, "&&")
+		} else {
+			s.addToken(AMPERSAND, "&")
+		}
 	case ',':
 		s.addToken(COMMA, ",")
 	case '.':
 		s.addToken(DOT, ".")
 	case '-':
-		s.addToken(MINUS, "-")
+		if s.match('-') {
+			s.addToken(MINUS_MINUS, "--")
+		} else {
+			s.addToken(MINUS, "-")
+		}
 	case '+':
-		s.addToken(PLUS, "+")
+		if s.match('+') {
+			s.addToken(PLUS_PLUS, "++")
+		} else {
+			s.addToken(PLUS, "+")
+		}
 	case ';':
 		s.addToken(SEMICOLON, ";")
 	case '*':
-		s.addToken(STAR, "*")
+		if s.match('*') {
+			s.addToken(STAR_STAR, "**")
+		} else {
+			s.addToken(STAR, "*")
+		}
 	case '!':
 		if s.match('=') {
 			s.addToken(BANG_EQUAL, "!=")
@@ -90,18 +146,26 @@ func (s *Scanner) scanToken() {
 	case '=':
 		if s.match('=') {
 			s.addToken(EQUAL_EQUAL, "==")
+		} else if s.match('>') {
+			s.addToken(ARROW, "=>")
 		} else {
 			s.addToken(EQUAL, "=")
 		}
 	case '<':
 		if s.match('=') {
 			s.addToken(LESS_EQUAL, ">=")
+		} else if s.match('>') {
+			s.addToken(BANG_EQUAL, "<>")
+		} else if s.match('<') {
+			s.addToken(LEFT, "<<")
 		} else {
 			s.addToken(LESS, "<")
 		}
 	case '>':
 		if s.match('=') {
 			s.addToken(GREATER_EQUAL, ">=")
+		} else if s.match('>') {
+			s.addToken(RIGHT, ">>")
 		} else {
 			s.addToken(GREATER, ">")
 		}

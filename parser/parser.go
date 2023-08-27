@@ -1,6 +1,9 @@
 package parser
 
 import (
+	"fmt"
+	"log"
+
 	"github.com/arturoeanton/go-r2lox/lexer"
 	"github.com/arturoeanton/go-r2lox/r2loxerrors"
 )
@@ -63,13 +66,54 @@ func (p *Parser) Term() Expr {
 		expr = Binary{Left: expr, Operator: operator, Right: right}
 	}
 
+	for p.match(lexer.MINUS_MINUS) {
+		op := p.previous()
+		operator := lexer.Token{Type: lexer.MINUS, Lexeme: "--", Literal: nil, Line: op.Line}
+		right := Literal{Value: 1.0}
+		var name string
+		if expr == nil {
+			expr = p.Factor()
+		}
+		if expr, ok := expr.(Var); ok {
+			name = expr.Name.Lexeme
+		}
+
+		expr = Assign{Name: lexer.Token{
+			Type:    lexer.IDENTIFIER,
+			Lexeme:  name,
+			Literal: nil,
+			Line:    op.Line,
+		}, Value: Binary{Left: expr, Operator: operator, Right: right}}
+
+	}
+
+	for p.match(lexer.PLUS_PLUS) {
+		op := p.previous()
+		operator := lexer.Token{Type: lexer.PLUS, Lexeme: "++", Literal: nil, Line: op.Line}
+		right := Literal{Value: 1.0}
+		var name string
+		if expr == nil {
+			expr = p.Factor()
+		}
+		if expr, ok := expr.(Var); ok {
+			name = expr.Name.Lexeme
+		}
+
+		expr = Assign{Name: lexer.Token{
+			Type:    lexer.IDENTIFIER,
+			Lexeme:  name,
+			Literal: nil,
+			Line:    op.Line,
+		}, Value: Binary{Left: expr, Operator: operator, Right: right}}
+	}
+
 	return expr
 }
 
 func (p *Parser) Factor() Expr {
 	expr := p.Unary()
 
-	for p.match(lexer.SLASH, lexer.STAR) {
+	for p.match(lexer.SLASH, lexer.STAR, lexer.STAR_STAR, lexer.PERCENT) {
 		operator := p.previous()
 		right := p.Unary()
 		expr = Binary{Left: expr, Operator: operator, Right: right}
@@ -81,8 +125,8 @@ func (p *Parser) Factor() Expr {
 func (p *Parser) Unary() Expr {
 	if p.match(lexer.BANG, lexer.MINUS) {
 		operator := p.previous()
-		right := p.Unary()
-		return Unary{Operator: operator, Right: right}
+		value := p.Unary()
+		return Unary{Operator: operator, Value: value}
 	}
 
 	return p.Call()
@@ -121,6 +165,12 @@ func (p *Parser) Primary() Expr {
 		return Grouping{Expression: expr}
 	}
 
+	if p.match(lexer.PIPE) {
+		expr := p.Equality()
+		p.consume(lexer.PIPE, "Expect '|' after expression.")
+		return GroupingABS{Expression: expr}
+	}
+
 	if p.match(lexer.EOF) {
 		return Literal{Value: nil}
 	}
@@ -155,10 +205,12 @@ func (p *Parser) previous() lexer.Token {
 }
 
 func (p *Parser) consume(t lexer.TokenType, message string) lexer.Token {
+	line := p.peek().Line
 	if p.check(t) {
 		return p.advance()
 	}
 
+	log.Fatalln(message + "\n\tLine -> " + fmt.Sprint(line) + "\n\tNear ->" + p.peek().Lexeme)
 	panic(message)
 }
 
@@ -219,7 +271,6 @@ func (p *Parser) synchronize() {
 		case lexer.FOR:
 		case lexer.IF:
 		case lexer.WHILE:
-		case lexer.PRINT:
 		case lexer.RETURN:
 			return
 		}
@@ -282,9 +333,9 @@ func (p *Parser) VarDeclaration() Stmt {
 }
 
 func (p *Parser) Statement() Stmt {
-	if p.match(lexer.PRINT) {
+	/*if p.match(lexer.PRINT) {
 		return p.PrintStatement()
-	}
+	}*/
 
 	if p.match(lexer.LEFT_BRACE) {
 		return Block{Statements: p.Block()}
@@ -421,11 +472,12 @@ func (p *Parser) finishCall(callee Expr) Expr {
 	return Call{Callee: callee, Paren: paren, Arguments: arguments}
 }
 
+/*
 func (p *Parser) PrintStatement() Stmt {
 	value := p.Expression()
 	p.consume(lexer.SEMICOLON, "Expect ';' after value.")
 	return Print{Expression: value}
-}
+}*/
 
 func (p *Parser) ExpressionStatement() Stmt {
 	expr := p.Expression()

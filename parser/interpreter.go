@@ -2,11 +2,20 @@ package parser
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
 	"github.com/arturoeanton/go-r2lox/lexer"
 )
+
+var (
+	GlobalFx = make(map[string]LoxCallable)
+)
+
+func init() {
+	GlobalFx["clock"] = Clock{}
+}
 
 type LoxCallable interface {
 	Call(interpreter *Interpreter, arguments []interface{}) interface{}
@@ -32,7 +41,9 @@ func (c Clock) Arity() int {
 func NewInterpreter(stmts []Stmt) *Interpreter {
 	global := NewEnviroment(nil)
 
-	global.Define("clock", Clock{})
+	for k, v := range GlobalFx {
+		global.Define(k, v)
+	}
 
 	return &Interpreter{
 		Stmts:      stmts,
@@ -80,7 +91,7 @@ func (i *Interpreter) VisitCallExpr(expr Call) interface{} {
 		fmt.Println("Can only call functions and classes.")
 		return nil
 	}
-	if len(arguments) != function.Arity() {
+	if function.Arity() != -1 && function.Arity() != len(arguments) {
 		fmt.Println("Expected", function.Arity(), "arguments but got", len(arguments), ".")
 		return nil
 	}
@@ -141,11 +152,11 @@ func (i *Interpreter) VisitExpressionStmt(stmt Expression) interface{} {
 	return i.evaluate(stmt.Expression)
 }
 
-func (i *Interpreter) VisitPrint(stmt Print) interface{} {
+/*func (i *Interpreter) VisitPrint(stmt Print) interface{} {
 	value := i.evaluate(stmt.Expression)
 	fmt.Println(stringify(value))
 	return value
-}
+}*/
 
 func stringify(object interface{}) string {
 	if object == nil {
@@ -172,6 +183,8 @@ func (i *Interpreter) VisitBinaryExpr(expr Binary) interface{} {
 	switch expr.Operator.Type {
 	case lexer.MINUS:
 		return left.(float64) - right.(float64)
+	case lexer.PERCENT:
+		return (left.(float64) * right.(float64) / 100.0)
 	case lexer.PLUS:
 		{
 			if _, ok := left.(float64); ok {
@@ -184,6 +197,8 @@ func (i *Interpreter) VisitBinaryExpr(expr Binary) interface{} {
 		}
 	case lexer.SLASH:
 		return left.(float64) / right.(float64)
+	case lexer.STAR_STAR:
+		return math.Pow(left.(float64), right.(float64))
 	case lexer.STAR:
 		// validate rigth is string
 		{
@@ -231,6 +246,14 @@ func (i *Interpreter) VisitBinaryExpr(expr Binary) interface{} {
 	}
 }
 
+func (i *Interpreter) VisitGroupingABSExpr(expr GroupingABS) interface{} {
+	value := i.evaluate(expr.Expression)
+	if value.(float64) < 0 {
+		return -value.(float64)
+	}
+	return value
+}
+
 func (i *Interpreter) VisitGroupingExpr(expr Grouping) interface{} {
 	return i.evaluate(expr.Expression)
 }
@@ -240,13 +263,17 @@ func (i *Interpreter) VisitLiteralExpr(expr Literal) interface{} {
 }
 
 func (i *Interpreter) VisitUnaryExpr(expr Unary) interface{} {
-	right := i.evaluate(expr.Right)
+	value := i.evaluate(expr.Value)
 
 	switch expr.Operator.Type {
 	case lexer.MINUS:
-		return -(right.(float64))
+		return -(value.(float64))
+	case lexer.PLUS_PLUS:
+		return value.(float64) + 1
+	case lexer.MINUS_MINUS:
+		return value.(float64) - 1
 	case lexer.BANG:
-		return !(i.isTruthy(right))
+		return !(i.isTruthy(value))
 	default:
 		return nil
 	}
