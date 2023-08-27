@@ -77,8 +77,11 @@ func main() {
 		println(">>>>",s[4..9, 15, 8..13, 101]);
 		println("s 101 :",s[101]["jaja"][1]);
 
-		var b{} = {key:i, "jojo":1, "jaja": 3};
-		println(b);
+		var b{} = {key:i, "jojo":[1,4,7], "jaja": 3};
+		println("b>",b);
+
+		b["jojo"] = 2;
+		println("b>",b);
 
 		
 
