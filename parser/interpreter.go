@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"math"
@@ -312,7 +313,14 @@ func (i *Interpreter) VisitVariableExpr(expr Var) interface{} {
 	value := i.enviroment.Get(expr.Name.Lexeme)
 
 	if value == nil {
-		log.Fatalln("Undefined variable '" + expr.Name.Lexeme + "'.")
+		if expr.Sub {
+			expr.Sub = false
+			i.VisitVar(expr)
+			value = i.enviroment.Get(expr.Name.Lexeme)
+		}
+		if value == nil {
+			log.Fatalln("Undefined variable '" + expr.Name.Lexeme + "'.")
+		}
 	}
 	if len(expr.Selectors) > 0 {
 		for _, arraySelector := range expr.Selectors {
@@ -361,9 +369,57 @@ func (i *Interpreter) VisitVariableExpr(expr Var) interface{} {
 	return value
 }
 
+func setByPath(target interface{}, path []interface{}, value interface{}) error {
+	// Si no hay más elementos en la path, simplemente asigna el valor
+	if len(path) == 0 {
+		return errors.New("path is too short")
+	}
+
+	switch t := target.(type) {
+	case []interface{}:
+		// Trata target como un slice
+		index := int(path[0].(float64))
+
+		// Si esta es la última parte de la path, asigna el valor
+		if len(path) == 1 {
+			t[index] = value
+			return nil
+		}
+		return setByPath(t[index], path[1:], value)
+
+	case map[interface{}]interface{}:
+		// Trata target como un mapa
+		key := path[0]
+		if len(path) == 1 {
+			t[key] = value
+			return nil
+		}
+		if _, exists := t[key]; !exists {
+			return errors.New("key not found")
+		}
+		return setByPath(t[key], path[1:], value)
+
+	default:
+		return errors.New("unsupported type")
+	}
+}
+
 func (i *Interpreter) VisitAssignExpr(expr Assign) interface{} {
 	value := i.evaluate(expr.Value)
-	i.enviroment.Assign(expr.Name.Lexeme, value)
+	old := i.enviroment.Get(expr.Name.Lexeme)
+
+	path_var := make([]interface{}, len(expr.Selectors))
+	if len(expr.Selectors) > 0 {
+		for index, arraySelector := range expr.Selectors {
+			for _, selExpr := range arraySelector {
+				path_var[index] = i.evaluate(selExpr)
+			}
+		}
+		setByPath(old, path_var, value)
+		return value
+	} else {
+		i.enviroment.Assign(expr.Name.Lexeme, value)
+	}
 	return value
 }
 

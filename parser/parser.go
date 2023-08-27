@@ -6,6 +6,7 @@ import (
 
 	"github.com/arturoeanton/go-r2lox/lexer"
 	"github.com/arturoeanton/go-r2lox/r2loxerrors"
+	"github.com/google/uuid"
 )
 
 type Parser struct {
@@ -231,7 +232,8 @@ func (p *Parser) assignment() Expr {
 
 		if expr, ok := expr.(Var); ok {
 			name := expr.Name
-			return Assign{Name: name, Value: value}
+
+			return Assign{Name: name, Value: value, Selectors: expr.Selectors}
 		}
 
 		r2loxerrors.Errors(equals.Line, "Invalid assignment target.")
@@ -377,6 +379,14 @@ func (p *Parser) Array() []Expr {
 				for i := start; i <= end; i++ {
 					initializer = append(initializer, Literal{Value: float64(i)})
 				}
+			} else if p.match(lexer.LEFT_BRACKET) {
+				subarray := p.Array()
+				subVar := Var{Name: lexer.Token{Type: lexer.IDENTIFIER, Lexeme: "subarray-" + uuid.NewString()}, Sub: true, InitializerArray: subarray}
+				initializer = append(initializer, subVar)
+			} else if p.match(lexer.LEFT_BRACE) {
+				submap := p.Map()
+				subVar := Var{Name: lexer.Token{Type: lexer.IDENTIFIER, Lexeme: "submap-" + uuid.NewString()}, Sub: true, InitializerMap: submap}
+				initializer = append(initializer, subVar)
 			} else {
 				initializer = append(initializer, expr)
 			}
@@ -402,8 +412,20 @@ func (p *Parser) Map() []ItemVar {
 			}
 			key := p.Expression()
 			p.consume(lexer.COLON, "Expect ':' after key.")
-			value := p.Expression()
-			initializer = append(initializer, ItemVar{Key: key, Value: value})
+
+			if p.match(lexer.LEFT_BRACKET) {
+				subarray := p.Array()
+				subVar := Var{Name: lexer.Token{Type: lexer.IDENTIFIER, Lexeme: "subarray-" + uuid.NewString()}, Sub: true, InitializerArray: subarray}
+				initializer = append(initializer, ItemVar{Key: key, Value: subVar})
+			} else if p.match(lexer.LEFT_BRACE) {
+				submap := p.Map()
+				subVar := Var{Name: lexer.Token{Type: lexer.IDENTIFIER, Lexeme: "submap-" + uuid.NewString()}, Sub: true, InitializerMap: submap}
+				initializer = append(initializer, ItemVar{Key: key, Value: subVar})
+			} else {
+				value := p.Expression()
+				initializer = append(initializer, ItemVar{Key: key, Value: value})
+			}
+
 			if !p.match(lexer.COMMA) {
 				break
 			}

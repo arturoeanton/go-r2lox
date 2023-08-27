@@ -84,8 +84,14 @@ func main() {
 
 		var frase1[] = ["hola1", "mundo1"];
 		var frase2[] = ["hola2", "mundo2"];
-		var frases[] = [frase1,frase2];
+		var frases[] = [frase1,frase2, [8,9], {"pp" : [1,0,0,{"ko":{"p":0}}]}];
 
+		println("aa>:",frases);
+		frases[3]["pp"]= 10;		
+		println("aa>:",frases);
+
+		println("aa:",frases[2][1]);
+		println("aa:",frases[3]["pp"][3]["ko"]);
 		println("aa:",frases[0][1]);
 
 		println(b["key1","jaja"]);

@@ -104,6 +104,7 @@ type Var struct {
 	InitializerArray []Expr
 	InitializerMap   []ItemVar
 	Selectors        [][]Expr
+	Sub              bool
 }
 type ItemVar struct {
 	Key   Expr
@@ -120,8 +121,10 @@ func (v Var) AcceptStmt(visitor Visitor) interface{} {
 }
 
 type Assign struct {
-	Name  lexer.Token
-	Value Expr
+	Name      lexer.Token
+	Value     Expr
+	Selectors [][]Expr
+	Sub       bool
 }
 
 func (a Assign) AcceptExpr(visitor Visitor) interface{} {
