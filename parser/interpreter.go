@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"log"
 	"math"
 	"strings"
 	"time"
@@ -282,32 +283,69 @@ func (i *Interpreter) VisitUnaryExpr(expr Unary) interface{} {
 
 func (i *Interpreter) VisitVar(stmt Var) interface{} {
 	var value interface{}
-	if stmt.Initializer != nil {
-		value = i.evaluate(stmt.Initializer)
+	if stmt.InitializerVal != nil {
+		value = i.evaluate(stmt.InitializerVal)
 	}
+	if stmt.InitializerArray != nil {
+		var values []interface{} = make([]interface{}, len(stmt.InitializerArray))
+		for index, value := range stmt.InitializerArray {
+			values[index] = i.evaluate(value)
+		}
+		value = values
+	}
+
+	if stmt.InitializerMap != nil {
+		var values map[interface{}]interface{} = make(map[interface{}]interface{})
+		for _, item := range stmt.InitializerMap {
+			key := i.evaluate(item.Key)
+			value := i.evaluate(item.Value)
+			values[key] = value
+		}
+		value = values
+	}
+
 	i.enviroment.Define(stmt.Name.Lexeme, value)
 	return nil
 }
 
-func (i *Interpreter) VisitArray(expr Array) interface{} {
-	var values []interface{}
-	for _, value := range expr.Initializer {
-		values = append(values, i.evaluate(value))
-	}
-	return values
-}
-
-func (i *Interpreter) VisitMap(expr Map) interface{} {
-	var values map[interface{}]interface{}
-	values = make(map[interface{}]interface{})
-	for key, value := range expr.Initializer {
-		values[i.evaluate(key)] = i.evaluate(value)
-	}
-	return values
-}
-
 func (i *Interpreter) VisitVariableExpr(expr Var) interface{} {
-	return i.enviroment.Get(expr.Name.Lexeme)
+	value := i.enviroment.Get(expr.Name.Lexeme)
+
+	if value == nil {
+		log.Fatalln("Undefined variable '" + expr.Name.Lexeme + "'.")
+	}
+	if len(expr.Selector) > 0 {
+		if array, ok := value.([]interface{}); ok {
+			values := make([]interface{}, len(expr.Selector))
+			for index, selExpr := range expr.Selector {
+				selector := i.evaluate(selExpr)
+				pos := int(selector.(float64))
+				if pos < 0 {
+					pos = len(array) + pos
+				}
+				values[index] = array[pos]
+			}
+			if len(values) == 1 {
+				return values[0]
+			}
+			return values
+		}
+
+		if m, ok := value.(map[interface{}]interface{}); ok {
+			values := make(map[interface{}]interface{})
+			var selector interface{}
+			for _, selExpr := range expr.Selector {
+				selector = i.evaluate(selExpr)
+				values[selector] = m[selector]
+			}
+			if len(values) == 1 {
+				return values[selector]
+			}
+			return values
+		}
+	}
+
+	return value
 }
 
 func (i *Interpreter) VisitAssignExpr(expr Assign) interface{} {

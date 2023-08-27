@@ -151,12 +151,19 @@ func (p *Parser) Primary() Expr {
 		return Literal{Value: nil}
 	}
 
-	if p.match(lexer.NUMBER, lexer.STRING) {
+	if p.match(lexer.NUMBER, lexer.STRING, lexer.ARRAY, lexer.MAP) {
 		return Literal{Value: p.previous().Literal}
 	}
 
 	if p.match(lexer.IDENTIFIER) {
-		return Var{Name: p.previous()}
+		name := p.previous()
+
+		if p.match(lexer.LEFT_BRACKET) {
+			array := p.Array()
+			return Var{Name: name, Selector: array}
+		}
+
+		return Var{Name: name}
 	}
 
 	if p.match(lexer.LEFT_PAREN) {
@@ -294,18 +301,6 @@ func (p *Parser) Declaration() Stmt {
 		return p.VarDeclaration()
 	}
 
-	/*if p.match(lexer.CONST) {
-		return p.ConstDeclaration()
-	}
-
-	if p.match(lexer.LET) {
-		return p.LetDeclaration()
-	}
-
-	if p.match(lexer.CLASS) {
-		return p.ClassDeclaration()
-	}*/
-
 	return p.Statement()
 }
 
@@ -335,27 +330,87 @@ func (p *Parser) Function(kind string) Stmt {
 func (p *Parser) VarDeclaration() Stmt {
 	name := p.consume(lexer.IDENTIFIER, "Expect variable name.")
 
-	var initializer Expr
 	if p.match(lexer.EQUAL) {
-		initializer = p.Expression()
+		initializer := p.Expression()
+		p.consume(lexer.SEMICOLON, "Expect ';' after variable declaration.")
+		return Var{Name: name, InitializerVal: initializer}
+	}
+	if p.match(lexer.LEFT_BRACKET) {
+		p.consume(lexer.RIGHT_BRACKET, "Expect ']' after arguments.")
+		p.consume(lexer.EQUAL, "Expect '=' after ']'.")
+		p.consume(lexer.LEFT_BRACKET, "Expect '[' after '='.")
+		initializer := p.Array()
+		p.consume(lexer.SEMICOLON, "Expect ';' after variable declaration.")
+		return Var{Name: name, InitializerArray: initializer}
+	}
+
+	if p.match(lexer.LEFT_BRACE) {
+		p.consume(lexer.RIGHT_BRACE, "Expect '}' after arguments..")
+		p.consume(lexer.EQUAL, "Expect '=' after '}'.")
+		p.consume(lexer.LEFT_BRACE, "Expect '{' after '='.")
+		initializer := p.Map()
+		p.consume(lexer.SEMICOLON, "Expect ';' after variable declaration.")
+		return Var{Name: name, InitializerMap: initializer}
 	}
 
 	p.consume(lexer.SEMICOLON, "Expect ';' after variable declaration.")
-	return Var{Name: name, Initializer: initializer}
+	return Var{Name: name, InitializerVal: nil}
 }
 
-func (p *Parser) ArrayDeclaration() Stmt {
-	name := p.consume(lexer.IDENTIFIER, "Expect array name.")
+func (p *Parser) Array() []Expr {
+	initializer := []Expr{}
 
-	p.consume(lexer.LEFT_BRACKET, "Expect '[' before array body.")
+	if !p.check(lexer.RIGHT_BRACKET) {
+		for {
+			if len(initializer) >= 255 {
+				r2loxerrors.Errors(p.peek().Line, "Can't have more than 255 arguments.")
+			}
+			expr := p.Expression()
 
-	initializers := []Expr{}
+			if p.match(lexer.DOT) {
+				p.consume(lexer.DOT, "Expect '.' after arguments.")
+				literal := p.Expression()
 
-	p.consume(lexer.RIGHT_BRACKET, "Expect ']' after array body.")
+				start := int(expr.(Literal).Value.(float64))
+				end := int(literal.(Literal).Value.(float64))
+				for i := start; i <= end; i++ {
+					initializer = append(initializer, Literal{Value: float64(i)})
+				}
+			} else {
+				initializer = append(initializer, expr)
+			}
 
-	p.consume(lexer.SEMICOLON, "Expect ';' after array declaration.")
-	return Array{Name: name, Initializer: initializers}
+			if !p.match(lexer.COMMA) {
+				break
+			}
+		}
+	}
 
+	p.consume(lexer.RIGHT_BRACKET, "Expect ']' after arguments.")
+
+	return initializer
+}
+
+func (p *Parser) Map() []ItemVar {
+	initializer := []ItemVar{}
+
+	if !p.check(lexer.RIGHT_BRACE) {
+		for {
+			if len(initializer) >= 255 {
+				r2loxerrors.Errors(p.peek().Line, "Can't have more than 255 arguments.")
+			}
+			key := p.Expression()
+			p.consume(lexer.COLON, "Expect ':' after key.")
+			value := p.Expression()
+			initializer = append(initializer, ItemVar{Key: key, Value: value})
+			if !p.match(lexer.COMMA) {
+				break
+			}
+		}
+	}
+
+	p.consume(lexer.RIGHT_BRACE, "Expect '}' after arguments.")
+	return initializer
 }
 
 func (p *Parser) Statement() Stmt {

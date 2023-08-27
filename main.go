@@ -64,10 +64,23 @@ func main() {
 	} else {
 		//runPrompt()
 		source := `
-		var i =1;
-		var map1{} = {a:1,b:2};
+		var key = "key1";
+		var i =123;
 		var j = |2-5- (10%90)|;
 		println(j);
+
+		var a[] = [1,key,i,88];
+		println(a[-1]);
+		var x{} = {key:i, "jojo":1, "jaja": 3};
+		var s[] = [0..100, x,90];
+		println(">>>>",s[4..9, 15, 8..13, 101]);
+
+		var b{} = {key:i, "jojo":1, "jaja": 3};
+		println(b);
+
+		println(b["key1","jaja"]);
+		
+
 		`
 		run(source)
 	}

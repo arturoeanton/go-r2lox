@@ -80,6 +80,7 @@ func (s *Scanner) isAtEnd() bool {
 
 func (s *Scanner) scanToken() {
 	c := s.advance()
+
 	switch c {
 	case '%':
 		s.addToken(PERCENT, "%")
@@ -202,7 +203,7 @@ func (s *Scanner) isDigit(c rune) bool {
 	return c >= '0' && c <= '9'
 }
 
-func (s *Scanner) number() {
+func (s *Scanner) number() interface{} {
 	for s.isDigit(s.peek()) {
 		s.advance()
 	}
@@ -223,6 +224,7 @@ func (s *Scanner) number() {
 	}
 
 	s.addToken(NUMBER, value)
+	return value
 }
 
 func (s *Scanner) peekNext() rune {

@@ -21,10 +21,7 @@ type Visitor interface {
 	VisitCallExpr(expr Call) interface{}
 
 	VisitExpressionStmt(stmt Expression) interface{}
-	//VisitPrint(stmt Print) interface{}
 	VisitVar(stmt Var) interface{}
-	VisitArray(stmt Array) interface{}
-	VisitMap(stmt Map) interface{}
 
 	VisitVariableExpr(expr Var) interface{}
 	VisitBlockStmt(stmt Block) interface{}
@@ -102,8 +99,15 @@ func (p Print) AcceptStmt(visitor Visitor) interface{} {
 }*/
 
 type Var struct {
-	Name        lexer.Token
-	Initializer Expr
+	Name             lexer.Token
+	InitializerVal   Expr
+	InitializerArray []Expr
+	InitializerMap   []ItemVar
+	Selector         []Expr
+}
+type ItemVar struct {
+	Key   Expr
+	Value Expr
 }
 
 func (v Var) AcceptExpr(visitor Visitor) interface{} {
@@ -113,24 +117,6 @@ func (v Var) AcceptExpr(visitor Visitor) interface{} {
 func (v Var) AcceptStmt(visitor Visitor) interface{} {
 
 	return visitor.VisitVar(v)
-}
-
-type Array struct {
-	Name        lexer.Token
-	Initializer []Expr
-}
-
-func (a Array) AcceptStmt(visitor Visitor) interface{} {
-	return visitor.VisitArray(a)
-}
-
-type Map struct {
-	Name        lexer.Token
-	Initializer map[Expr]Expr
-}
-
-func (m Map) AcceptStmt(visitor Visitor) interface{} {
-	return visitor.VisitMap(m)
 }
 
 type Assign struct {
