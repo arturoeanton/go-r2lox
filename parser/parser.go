@@ -158,12 +158,13 @@ func (p *Parser) Primary() Expr {
 	if p.match(lexer.IDENTIFIER) {
 		name := p.previous()
 
-		if p.match(lexer.LEFT_BRACKET) {
+		selectors := [][]Expr{}
+		for p.match(lexer.LEFT_BRACKET) {
 			array := p.Array()
-			return Var{Name: name, Selector: array}
+			selectors = append(selectors, array)
 		}
 
-		return Var{Name: name}
+		return Var{Name: name, Selectors: selectors}
 	}
 
 	if p.match(lexer.LEFT_PAREN) {

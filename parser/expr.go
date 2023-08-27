@@ -103,7 +103,7 @@ type Var struct {
 	InitializerVal   Expr
 	InitializerArray []Expr
 	InitializerMap   []ItemVar
-	Selector         []Expr
+	Selectors        [][]Expr
 }
 type ItemVar struct {
 	Key   Expr

@@ -314,34 +314,47 @@ func (i *Interpreter) VisitVariableExpr(expr Var) interface{} {
 	if value == nil {
 		log.Fatalln("Undefined variable '" + expr.Name.Lexeme + "'.")
 	}
-	if len(expr.Selector) > 0 {
-		if array, ok := value.([]interface{}); ok {
-			values := make([]interface{}, len(expr.Selector))
-			for index, selExpr := range expr.Selector {
-				selector := i.evaluate(selExpr)
-				pos := int(selector.(float64))
-				if pos < 0 {
-					pos = len(array) + pos
+	if len(expr.Selectors) > 0 {
+		for _, arraySelector := range expr.Selectors {
+			if array, ok := value.([]interface{}); ok {
+				values := make([]interface{}, len(arraySelector))
+				for index, selExpr := range arraySelector {
+					selector := i.evaluate(selExpr)
+					pos := int(selector.(float64))
+					if pos < 0 {
+						pos = len(array) + pos
+					}
+					values[index] = array[pos]
 				}
-				values[index] = array[pos]
+				if len(values) == 1 {
+					value = values[0]
+					continue
+				}
+				value = values
+
 			}
-			if len(values) == 1 {
-				return values[0]
+
+			if m, ok := value.(map[interface{}]interface{}); ok {
+				values := make(map[interface{}]interface{})
+				var selector interface{}
+				for _, selExpr := range arraySelector {
+					selector = i.evaluate(selExpr)
+					values[selector] = m[selector]
+				}
+				if len(values) == 1 {
+					value = values[selector]
+					continue
+				}
+				value = values
 			}
-			return values
 		}
 
-		if m, ok := value.(map[interface{}]interface{}); ok {
-			values := make(map[interface{}]interface{})
-			var selector interface{}
-			for _, selExpr := range expr.Selector {
-				selector = i.evaluate(selExpr)
-				values[selector] = m[selector]
+		if len(expr.Selectors) == 1 {
+			if array, ok := value.([]interface{}); ok {
+				if len(array) == 1 {
+					value = array[0]
+				}
 			}
-			if len(values) == 1 {
-				return values[selector]
-			}
-			return values
 		}
 	}
 

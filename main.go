@@ -71,12 +71,22 @@ func main() {
 
 		var a[] = [1,key,i,88];
 		println(a[-1]);
-		var x{} = {key:i, "jojo":1, "jaja": 3};
+		var ja[] = [1,20,3,4,5,6,7,8,9,10];
+		var x{} = {key:i, "jojo":1, "jaja": ja};
 		var s[] = [0..100, x,90];
 		println(">>>>",s[4..9, 15, 8..13, 101]);
+		println("s 101 :",s[101]["jaja"][1]);
 
 		var b{} = {key:i, "jojo":1, "jaja": 3};
 		println(b);
+
+		
+
+		var frase1[] = ["hola1", "mundo1"];
+		var frase2[] = ["hola2", "mundo2"];
+		var frases[] = [frase1,frase2];
+
+		println("aa:",frases[0][1]);
 
 		println(b["key1","jaja"]);
 		
