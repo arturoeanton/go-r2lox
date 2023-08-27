@@ -80,7 +80,7 @@ func main() {
 		var b{} = {key:i, "jojo":[1,4,7], "jaja": 3};
 		println("b>",b);
 
-		b["jojo"] = 2;
+		b["jojo"][0] = 2;
 		println("b>",b);
 
 		
