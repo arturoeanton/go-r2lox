@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"strings"
 	"time"
 )
 
@@ -18,7 +17,7 @@ func init() {
 }
 
 type LoxCallable interface {
-	Call(interpreter *Interpreter, arguments []interface{}) interface{}
+	Call(interpreter *Interpreter, arguments []interface{}, this interface{}) interface{}
 	Arity() int
 }
 
@@ -30,7 +29,7 @@ type Interpreter struct {
 type Clock struct {
 }
 
-func (c Clock) Call(interpreter *Interpreter, arguments []interface{}) interface{} {
+func (c Clock) Call(interpreter *Interpreter, arguments []interface{}, this interface{}) interface{} {
 	return time.Now().Unix()
 }
 
@@ -86,17 +85,24 @@ func (i *Interpreter) VisitCallExpr(expr Call) interface{} {
 	for _, argument := range expr.Arguments {
 		arguments = append(arguments, i.evaluate(argument))
 	}
-	function, ok := callee.(LoxCallable)
+	callable, ok := callee.(LoxCallable)
 	if !ok {
 		fmt.Println("Can only call functions and classes.")
 		return nil
 	}
-	if function.Arity() != -1 && function.Arity() != len(arguments) {
-		fmt.Println("Expected", function.Arity(), "arguments but got", len(arguments), ".")
+	if callable.Arity() != -1 && callable.Arity() != len(arguments) {
+		fmt.Println("Expected", callable.Arity(), "arguments but got", len(arguments), ".")
 		return nil
 	}
 
-	return function.Call(i, arguments)
+	//if _, ok := expr.(Var); ok {
+	if expr.This.Name.Lexeme != "" {
+		this := i.full_evaluate(expr.This)
+		return callable.Call(i, arguments, this)
+	}
+	//}
+
+	return callable.Call(i, arguments, nil)
 
 }
 func (i *Interpreter) VisitWhileStmt(stmt While) interface{} {
@@ -150,29 +156,6 @@ func (i *Interpreter) VisitBlockStmt(stmt Block) interface{} {
 
 func (i *Interpreter) VisitExpressionStmt(stmt Expression) interface{} {
 	return i.evaluate(stmt.Expression)
-}
-
-/*func (i *Interpreter) VisitPrint(stmt Print) interface{} {
-	value := i.evaluate(stmt.Expression)
-	fmt.Println(stringify(value))
-	return value
-}*/
-
-func stringify(object interface{}) string {
-	if object == nil {
-		return "nil"
-	}
-	switch value := object.(type) {
-	case float64:
-		text := fmt.Sprintf("%v", value)
-
-		if ok := strings.HasSuffix(text, ".0"); ok {
-			text = text[:len(text)-2]
-		}
-		return text
-	default:
-		return fmt.Sprintf("%v", object)
-	}
 }
 
 func (i *Interpreter) VisitBinaryExpr(expr Binary) interface{} {
@@ -283,12 +266,12 @@ func (i *Interpreter) VisitUnaryExpr(expr Unary) interface{} {
 func (i *Interpreter) VisitVar(stmt Var) interface{} {
 	var value interface{}
 	if stmt.InitializerVal != nil {
-		value = i.evaluate(stmt.InitializerVal)
+		value = i.full_evaluate(stmt.InitializerVal)
 	}
 	if stmt.InitializerArray != nil {
 		var values []interface{} = make([]interface{}, len(stmt.InitializerArray))
 		for index, value := range stmt.InitializerArray {
-			values[index] = i.evaluate(value)
+			values[index] = i.full_evaluate(value)
 		}
 		value = values
 	}
@@ -296,8 +279,8 @@ func (i *Interpreter) VisitVar(stmt Var) interface{} {
 	if stmt.InitializerMap != nil {
 		var values map[interface{}]interface{} = make(map[interface{}]interface{})
 		for _, item := range stmt.InitializerMap {
-			key := i.evaluate(item.Key)
-			value := i.evaluate(item.Value)
+			key := i.full_evaluate(item.Key)
+			value := i.full_evaluate(item.Value)
 			values[key] = value
 		}
 		value = values
@@ -367,10 +350,10 @@ func (i *Interpreter) VisitVariableExpr(expr Var) interface{} {
 	return value
 }
 
-func setByPath(target interface{}, path []interface{}, value interface{}) error {
+func (i *Interpreter) setByPath(target interface{}, path []interface{}, value interface{}) (interface{}, error) {
 	// Si no hay más elementos en la path, simplemente asigna el valor
 	if len(path) == 0 {
-		return errors.New("path is too short")
+		return nil, errors.New("path is too short")
 	}
 
 	switch t := target.(type) {
@@ -378,46 +361,92 @@ func setByPath(target interface{}, path []interface{}, value interface{}) error 
 		// Trata target como un slice
 		index := int(path[0].(float64))
 
+		// Si el índice está fuera de rango, extiende el slice
+		for len(t) <= index {
+			t = append(t, nil)
+		}
+
 		// Si esta es la última parte de la path, asigna el valor
 		if len(path) == 1 {
 			t[index] = value
-			return nil
+			return t, nil
 		}
-		return setByPath(t[index], path[1:], value)
+		return i.setByPath(t[index], path[1:], value)
 
 	case map[interface{}]interface{}:
 		// Trata target como un mapa
 		key := path[0]
 		if len(path) == 1 {
 			t[key] = value
-			return nil
+			return t, nil
 		}
 		if _, exists := t[key]; !exists {
-			return errors.New("key not found")
+			return nil, errors.New("key not found")
 		}
-		return setByPath(t[key], path[1:], value)
+
+		if _, ok := t[key].([]interface{}); ok {
+			new, err := i.setByPath(t[key], path[1:], value)
+			if err != nil {
+				return nil, err
+			}
+			t[key] = new
+			return t, nil
+		}
+
+		return i.setByPath(t[key], path[1:], value)
 
 	default:
-		return errors.New("unsupported type")
+		return nil, errors.New("unsupported type")
 	}
 }
 
 func (i *Interpreter) VisitAssignExpr(expr Assign) interface{} {
-	value := i.evaluate(expr.Value)
+	value := i.full_evaluate(expr.Value)
 	old := i.enviroment.Get(expr.Name.Lexeme)
 
 	path_var := make([]interface{}, len(expr.Selectors))
 	if len(expr.Selectors) > 0 {
 		for index, arraySelector := range expr.Selectors {
 			for _, selExpr := range arraySelector {
-				path_var[index] = i.evaluate(selExpr)
+				path_var[index] = i.full_evaluate(selExpr)
 			}
 		}
-		setByPath(old, path_var, value)
+		new, err := i.setByPath(old, path_var, value)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		i.enviroment.Assign(expr.Name.Lexeme, new)
 		return value
 	} else {
 		i.enviroment.Assign(expr.Name.Lexeme, value)
 	}
+	return value
+}
+func (i *Interpreter) full_evaluate(expr Expr) interface{} {
+	value := i.evaluate(expr)
+	expr_v, ok := value.(Expr)
+	if ok {
+		value := i.full_evaluate(expr_v)
+		return value
+	}
+	expr_a, ok := value.([]Expr)
+	if ok {
+		var values []interface{} = make([]interface{}, len(expr_a))
+		for index, value := range expr_a {
+			values[index] = i.full_evaluate(value)
+		}
+		return values
+	}
+
+	expr_m, ok := value.([]ItemVar)
+	if ok {
+		var values map[interface{}]interface{} = make(map[interface{}]interface{})
+		for _, value := range expr_m {
+			values[i.full_evaluate(value.Key)] = i.full_evaluate(value.Value)
+		}
+		return values
+	}
+
 	return value
 }
 

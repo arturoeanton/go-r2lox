@@ -144,6 +144,7 @@ type Call struct {
 	Callee    Expr
 	Paren     Token
 	Arguments []Expr
+	This      Var
 }
 
 func (c Call) AcceptExpr(visitor Visitor) interface{} {
@@ -253,12 +254,13 @@ func (f Function) AcceptStmt(visitor Visitor) interface{} {
 	return visitor.VisitFunctionStmt(f)
 }
 
-func (f Function) Call(i *Interpreter, arguments []interface{}) interface{} {
+func (f Function) Call(i *Interpreter, arguments []interface{}, this interface{}) interface{} {
 
 	enviroment := NewEnviroment(f.Closure)
 	for i, param := range f.Parameters {
 		enviroment.Define(param.Lexeme, arguments[i])
 	}
+	enviroment.Define("this", this)
 
 	var value interface{}
 	func() {

@@ -1,94 +1,18 @@
 
-var j = 0;
-while ( j < 4 ) {
-    println(j);
-    j = j + 1;
-}
-for (var i = 0; i < 4; i = i + 1){
-    println(i);
-} 
 
-if (true or false) {
-    println("if true");
-}else {
-    println("no if true");
+fun hola(a){
+    println(this["a"]);
 }
 
-println("hi" or 2; // h)i
-println(nil or "yes"; // ye)s
-
-println("hi" and 2;  // )2
-println(nil and "yes"; // ni)l
-
-println("-----------------");
-println("Table OR");
-println(true or true; // tru)e
-println(true or false; // tru)e
-println( false or true; // tru)e
-println(false or false; // fals)e
 
 
-println("Table AND";) 
-println(true and true; // tru)e
-println(true and false; // fals)e
-println( false and true; // fals)e
-println(false and false; // fals)e
-
-println("-----------------");
+var l{} = {"a":"first", "b":"", "pepe":{"hola":hola, "a":"second"} };
 
 
-		
 
-var a = "global a"; 
-var b = "global b"; 
-var c = "global c"; 
-{
-    var a = "outer a"; 
-    var b = "outer b";
-    {
-        var a = "inner a"; 
-        println(a);
-        println(b);
-        println(c);
-    }
-    println(a;) 
-    println(b;) 
-    println(c);
-}
-println(a;) 
-println(b;) 
-println(c);
+l["b"] = {"c":1,"d":{ 1:"sas","s":[1,2,3] }};
 
-println("test fun");
-
-fun hola(a,b,c) {
-    println("estoy en una funcion");
-    return (a+b)*c;
-}
-println(hola(2,3,"A"));
+println(l["b"]["d"]["s"]);
 
 
-fun fib(n1) {
-    if (n1 <= 1) {
-        return n1;
-    }
-    return fib(n1-1) + fib(n1-2);
-}
-
-for (var i = 0; i < 10; i = i + 1){
-    println(fib(i));
-}
-
-println("-----------aa------");
-fun makeCounter() { 
-	var i = 0;
-	fun count() {
-	i = i + 1;
-	println(i); 
-	}
-	return count; 
-}
-var counter = makeCounter(); 
-counter(); // "1". 
-counter(); // "2".
-counter(); // "3".
+l["pepe"]["hola"]("aa");

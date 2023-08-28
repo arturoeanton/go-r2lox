@@ -21,11 +21,11 @@ const (
 	SEMICOLON                      //[ok]
 	SLASH                          //[ok]
 	STAR                           //[ok]
-	PERCENT                        //[]
-	COLON                          //[]
-	QUESTION                       //[]
-	CARET                          //[]
-	AMPERSAND                      //[]
+	PERCENT                        //[ok] %
+	COLON                          //[] :
+	QUESTION                       //[] ?
+	CARET                          //[] ^
+	AMPERSAND                      //[] &
 
 	// One or two character tokens.
 	BANG          //[ok]
@@ -54,8 +54,6 @@ const (
 	// Keywords.
 	AND        //[ok]
 	CLASS      //[]
-	ARRAY      //[]
-	MAP        //[]
 	MOD        //[]
 	NOT        //[]
 	TRY        //[]
@@ -79,15 +77,15 @@ const (
 	OR         //[ok]
 	RETURN     //[ok]
 	SUPER      //[]
-	THIS       //[]
-	TRUE       //[ok]
-	VAR        //[ok]
-	LET        //[]
-	CONST      //[]
-	WHILE      //[ok]
-	FOR        //[ok]
-	BREAK      //[]
-	CONTINUE   //[]
+	//THIS       //[]
+	TRUE     //[ok]
+	VAR      //[ok]
+	LET      //[ok]
+	CONST    //[]
+	WHILE    //[ok]
+	FOR      //[ok]
+	BREAK    //[]
+	CONTINUE //[]
 
 	EOF
 )

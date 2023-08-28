@@ -15,7 +15,7 @@ func init() {
 type Println struct {
 }
 
-func (c Println) Call(interpreter *Interpreter, arguments []interface{}) interface{} {
+func (c Println) Call(interpreter *Interpreter, arguments []interface{}, this interface{}) interface{} {
 	fmt.Println(arguments...)
 	return nil
 }
@@ -27,7 +27,7 @@ func (c Println) Arity() int {
 type Print struct {
 }
 
-func (c Print) Call(interpreter *Interpreter, arguments []interface{}) interface{} {
+func (c Print) Call(interpreter *Interpreter, arguments []interface{}, this interface{}) interface{} {
 	n, _ := fmt.Print(arguments...)
 	return n
 }
@@ -39,7 +39,7 @@ func (c Print) Arity() int {
 type Fprint struct {
 }
 
-func (c Fprint) Call(interpreter *Interpreter, arguments []interface{}) interface{} {
+func (c Fprint) Call(interpreter *Interpreter, arguments []interface{}, this interface{}) interface{} {
 	n, _ := fmt.Println(arguments...)
 	return n
 }
@@ -51,7 +51,7 @@ func (c Fprint) Arity() int {
 type Sprint struct {
 }
 
-func (c Sprint) Call(interpreter *Interpreter, arguments []interface{}) interface{} {
+func (c Sprint) Call(interpreter *Interpreter, arguments []interface{}, this interface{}) interface{} {
 	return fmt.Sprint(arguments...)
 }
 
@@ -62,7 +62,7 @@ func (c Sprint) Arity() int {
 type Len struct {
 }
 
-func (c Len) Call(interpreter *Interpreter, arguments []interface{}) interface{} {
+func (c Len) Call(interpreter *Interpreter, arguments []interface{}, this interface{}) interface{} {
 	return len(arguments)
 }
 

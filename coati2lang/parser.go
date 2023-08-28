@@ -131,15 +131,7 @@ func (p *Parser) Unary() Expr {
 	return p.Call()
 }
 
-func (p *Parser) errors(token Token, message string) {
-	if token.Type == EOF {
-		Errors(token.Line, " at end "+message)
-	} else {
-		Errors(token.Line, " at '"+token.Lexeme+"' "+message)
-	}
-}
-
-func (p *Parser) Primary() Expr {
+func (p *Parser) primary() Expr {
 	if p.match(FALSE) {
 		return Literal{Value: false}
 	}
@@ -150,7 +142,7 @@ func (p *Parser) Primary() Expr {
 		return Literal{Value: nil}
 	}
 
-	if p.match(NUMBER, STRING, ARRAY, MAP) {
+	if p.match(NUMBER, STRING) {
 		return Literal{Value: p.previous().Literal}
 	}
 
@@ -170,6 +162,16 @@ func (p *Parser) Primary() Expr {
 		expr := p.Equality()
 		p.consume(RIGHT_PAREN, "Expect ')' after expression.")
 		return Grouping{Expression: expr}
+	}
+
+	if p.match(LEFT_BRACKET) {
+		array := p.Array()
+		return Literal{Value: array}
+	}
+
+	if p.match(LEFT_BRACE) {
+		array := p.Map()
+		return Literal{Value: array}
 	}
 
 	if p.match(PIPE) {
@@ -299,6 +301,10 @@ func (p *Parser) Declaration() Stmt {
 	}
 
 	if p.match(VAR) {
+		return p.VarDeclaration()
+	}
+
+	if p.match(LET) {
 		return p.VarDeclaration()
 	}
 
@@ -541,7 +547,7 @@ func (p *Parser) ForStatement() Stmt {
 }
 
 func (p *Parser) Call() Expr {
-	expr := p.Primary()
+	expr := p.primary()
 
 	for {
 		if p.match(LEFT_PAREN) {
@@ -557,6 +563,14 @@ func (p *Parser) Call() Expr {
 func (p *Parser) finishCall(callee Expr) Expr {
 	arguments := []Expr{}
 
+	var this Var
+	if self, ok := callee.(Var); ok {
+		if len(self.Selectors) > 0 {
+			this = self
+			this.Selectors = this.Selectors[:len(this.Selectors)-1]
+		}
+	}
+
 	if !p.check(RIGHT_PAREN) {
 		for {
 			if len(arguments) >= 255 {
@@ -571,7 +585,7 @@ func (p *Parser) finishCall(callee Expr) Expr {
 
 	paren := p.consume(RIGHT_PAREN, "Expect ')' after arguments.")
 
-	return Call{Callee: callee, Paren: paren, Arguments: arguments}
+	return Call{Callee: callee, Paren: paren, Arguments: arguments, This: this}
 }
 
 /*
