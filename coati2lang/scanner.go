@@ -1,9 +1,7 @@
-package lexer
+package coati2lang
 
 import (
 	"strconv"
-
-	"github.com/arturoeanton/go-r2lox/r2loxerrors"
 )
 
 var keywords = map[string]TokenType{
@@ -194,7 +192,7 @@ func (s *Scanner) scanToken() {
 		} else if s.isAlpha(c) {
 			s.identifier()
 		} else {
-			r2loxerrors.Errors(s.Line, "Unexpected character.")
+			Errors(s.Line, "Unexpected character.")
 		}
 	}
 }
@@ -220,7 +218,7 @@ func (s *Scanner) number() interface{} {
 
 	value, err := strconv.ParseFloat(s.Source[s.Start:s.Current], 64)
 	if err != nil {
-		r2loxerrors.Errors(s.Line, "Error parsing number.")
+		Errors(s.Line, "Error parsing number.")
 	}
 
 	s.addToken(NUMBER, value)
@@ -277,7 +275,7 @@ func (s *Scanner) string() {
 	s.advance()
 
 	if s.isAtEnd() {
-		r2loxerrors.Errors(s.Line, "Unterminated string.")
+		Errors(s.Line, "Unterminated string.")
 		return
 	}
 

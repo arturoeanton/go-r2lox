@@ -1,21 +1,19 @@
-package parser
+package coati2lang
 
 import (
 	"fmt"
 	"log"
 
-	"github.com/arturoeanton/go-r2lox/lexer"
-	"github.com/arturoeanton/go-r2lox/r2loxerrors"
 	"github.com/google/uuid"
 )
 
 type Parser struct {
-	Tokens  []lexer.Token
+	Tokens  []Token
 	Current int
 	Start   int
 }
 
-func NewParser(tokens []lexer.Token) *Parser {
+func NewParser(tokens []Token) *Parser {
 	return &Parser{
 		Tokens:  tokens,
 		Current: 0,
@@ -26,7 +24,7 @@ func NewParser(tokens []lexer.Token) *Parser {
 func (p *Parser) Equality() Expr {
 	expr := p.Comparison()
 
-	for p.match(lexer.BANG_EQUAL, lexer.EQUAL_EQUAL) {
+	for p.match(BANG_EQUAL, EQUAL_EQUAL) {
 		operator := p.previous()
 		right := p.Comparison()
 		expr = Binary{Left: expr, Operator: operator, Right: right}
@@ -38,18 +36,18 @@ func (p *Parser) Equality() Expr {
 func (p *Parser) ReturnStatement() Stmt {
 	keyword := p.previous()
 	var value Expr
-	if !p.check(lexer.SEMICOLON) {
+	if !p.check(SEMICOLON) {
 		value = p.Expression()
 	}
 
-	p.consume(lexer.SEMICOLON, "Expect ';' after return value.")
+	p.consume(SEMICOLON, "Expect ';' after return value.")
 	return Return{Keyword: keyword, Value: value}
 }
 
 func (p *Parser) Comparison() Expr {
 	expr := p.Term()
 
-	for p.match(lexer.GREATER, lexer.GREATER_EQUAL, lexer.LESS, lexer.LESS_EQUAL) {
+	for p.match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL) {
 		operator := p.previous()
 		right := p.Term()
 		expr = Binary{Left: expr, Operator: operator, Right: right}
@@ -61,15 +59,15 @@ func (p *Parser) Comparison() Expr {
 func (p *Parser) Term() Expr {
 	expr := p.Factor()
 
-	for p.match(lexer.MINUS, lexer.PLUS) {
+	for p.match(MINUS, PLUS) {
 		operator := p.previous()
 		right := p.Factor()
 		expr = Binary{Left: expr, Operator: operator, Right: right}
 	}
 
-	for p.match(lexer.MINUS_MINUS) {
+	for p.match(MINUS_MINUS) {
 		op := p.previous()
-		operator := lexer.Token{Type: lexer.MINUS, Lexeme: "--", Literal: nil, Line: op.Line}
+		operator := Token{Type: MINUS, Lexeme: "--", Literal: nil, Line: op.Line}
 		right := Literal{Value: 1.0}
 		var name string
 		if expr == nil {
@@ -79,8 +77,8 @@ func (p *Parser) Term() Expr {
 			name = expr.Name.Lexeme
 		}
 
-		expr = Assign{Name: lexer.Token{
-			Type:    lexer.IDENTIFIER,
+		expr = Assign{Name: Token{
+			Type:    IDENTIFIER,
 			Lexeme:  name,
 			Literal: nil,
 			Line:    op.Line,
@@ -88,9 +86,9 @@ func (p *Parser) Term() Expr {
 
 	}
 
-	for p.match(lexer.PLUS_PLUS) {
+	for p.match(PLUS_PLUS) {
 		op := p.previous()
-		operator := lexer.Token{Type: lexer.PLUS, Lexeme: "++", Literal: nil, Line: op.Line}
+		operator := Token{Type: PLUS, Lexeme: "++", Literal: nil, Line: op.Line}
 		right := Literal{Value: 1.0}
 		var name string
 		if expr == nil {
@@ -100,8 +98,8 @@ func (p *Parser) Term() Expr {
 			name = expr.Name.Lexeme
 		}
 
-		expr = Assign{Name: lexer.Token{
-			Type:    lexer.IDENTIFIER,
+		expr = Assign{Name: Token{
+			Type:    IDENTIFIER,
 			Lexeme:  name,
 			Literal: nil,
 			Line:    op.Line,
@@ -114,7 +112,7 @@ func (p *Parser) Term() Expr {
 func (p *Parser) Factor() Expr {
 	expr := p.Unary()
 
-	for p.match(lexer.SLASH, lexer.STAR, lexer.STAR_STAR, lexer.PERCENT) {
+	for p.match(SLASH, STAR, STAR_STAR, PERCENT) {
 		operator := p.previous()
 		right := p.Unary()
 		expr = Binary{Left: expr, Operator: operator, Right: right}
@@ -124,7 +122,7 @@ func (p *Parser) Factor() Expr {
 }
 
 func (p *Parser) Unary() Expr {
-	if p.match(lexer.BANG, lexer.MINUS) {
+	if p.match(BANG, MINUS) {
 		operator := p.previous()
 		value := p.Unary()
 		return Unary{Operator: operator, Value: value}
@@ -133,34 +131,34 @@ func (p *Parser) Unary() Expr {
 	return p.Call()
 }
 
-func (p *Parser) errors(token lexer.Token, message string) {
-	if token.Type == lexer.EOF {
-		r2loxerrors.Errors(token.Line, " at end "+message)
+func (p *Parser) errors(token Token, message string) {
+	if token.Type == EOF {
+		Errors(token.Line, " at end "+message)
 	} else {
-		r2loxerrors.Errors(token.Line, " at '"+token.Lexeme+"' "+message)
+		Errors(token.Line, " at '"+token.Lexeme+"' "+message)
 	}
 }
 
 func (p *Parser) Primary() Expr {
-	if p.match(lexer.FALSE) {
+	if p.match(FALSE) {
 		return Literal{Value: false}
 	}
-	if p.match(lexer.TRUE) {
+	if p.match(TRUE) {
 		return Literal{Value: true}
 	}
-	if p.match(lexer.NIL) {
+	if p.match(NIL) {
 		return Literal{Value: nil}
 	}
 
-	if p.match(lexer.NUMBER, lexer.STRING, lexer.ARRAY, lexer.MAP) {
+	if p.match(NUMBER, STRING, ARRAY, MAP) {
 		return Literal{Value: p.previous().Literal}
 	}
 
-	if p.match(lexer.IDENTIFIER) {
+	if p.match(IDENTIFIER) {
 		name := p.previous()
 
 		selectors := [][]Expr{}
-		for p.match(lexer.LEFT_BRACKET) {
+		for p.match(LEFT_BRACKET) {
 			array := p.Array()
 			selectors = append(selectors, array)
 		}
@@ -168,26 +166,26 @@ func (p *Parser) Primary() Expr {
 		return Var{Name: name, Selectors: selectors}
 	}
 
-	if p.match(lexer.LEFT_PAREN) {
+	if p.match(LEFT_PAREN) {
 		expr := p.Equality()
-		p.consume(lexer.RIGHT_PAREN, "Expect ')' after expression.")
+		p.consume(RIGHT_PAREN, "Expect ')' after expression.")
 		return Grouping{Expression: expr}
 	}
 
-	if p.match(lexer.PIPE) {
+	if p.match(PIPE) {
 		expr := p.Equality()
-		p.consume(lexer.PIPE, "Expect '|' after expression.")
+		p.consume(PIPE, "Expect '|' after expression.")
 		return GroupingABS{Expression: expr}
 	}
 
-	if p.match(lexer.EOF) {
+	if p.match(EOF) {
 		return Literal{Value: nil}
 	}
 
 	return nil
 }
 
-func (p *Parser) match(types ...lexer.TokenType) bool {
+func (p *Parser) match(types ...TokenType) bool {
 	for _, t := range types {
 		if p.check(t) {
 			p.advance()
@@ -198,22 +196,22 @@ func (p *Parser) match(types ...lexer.TokenType) bool {
 	return false
 }
 
-func (p *Parser) check(t lexer.TokenType) bool {
+func (p *Parser) check(t TokenType) bool {
 	if p.isAtEnd() {
 		return false
 	}
 	return p.peek().Type == t
 }
 
-func (p *Parser) peek() lexer.Token {
+func (p *Parser) peek() Token {
 	return p.Tokens[p.Current]
 }
 
-func (p *Parser) previous() lexer.Token {
+func (p *Parser) previous() Token {
 	return p.Tokens[p.Current-1]
 }
 
-func (p *Parser) consume(t lexer.TokenType, message string) lexer.Token {
+func (p *Parser) consume(t TokenType, message string) Token {
 	line := p.peek().Line
 	if p.check(t) {
 		return p.advance()
@@ -226,7 +224,7 @@ func (p *Parser) consume(t lexer.TokenType, message string) lexer.Token {
 func (p *Parser) assignment() Expr {
 	expr := p.or()
 
-	if p.match(lexer.EQUAL) {
+	if p.match(EQUAL) {
 		equals := p.previous()
 		value := p.assignment()
 
@@ -236,7 +234,7 @@ func (p *Parser) assignment() Expr {
 			return Assign{Name: name, Value: value, Selectors: expr.Selectors}
 		}
 
-		r2loxerrors.Errors(equals.Line, "Invalid assignment target.")
+		Errors(equals.Line, "Invalid assignment target.")
 	}
 
 	return expr
@@ -245,7 +243,7 @@ func (p *Parser) assignment() Expr {
 func (p *Parser) or() Expr {
 	expr := p.and()
 
-	for p.match(lexer.OR) {
+	for p.match(OR) {
 		operator := p.previous()
 		right := p.and()
 		expr = Logical{Left: expr, Operator: operator, Right: right}
@@ -257,7 +255,7 @@ func (p *Parser) or() Expr {
 func (p *Parser) and() Expr {
 	expr := p.Equality()
 
-	for p.match(lexer.AND) {
+	for p.match(AND) {
 		operator := p.previous()
 		right := p.Equality()
 		expr = Logical{Left: expr, Operator: operator, Right: right}
@@ -270,18 +268,18 @@ func (p *Parser) synchronize() {
 	p.advance()
 
 	for !p.isAtEnd() {
-		if p.previous().Type == lexer.SEMICOLON {
+		if p.previous().Type == SEMICOLON {
 			return
 		}
 
 		switch p.peek().Type {
-		case lexer.CLASS:
-		case lexer.FUN:
-		case lexer.VAR:
-		case lexer.FOR:
-		case lexer.IF:
-		case lexer.WHILE:
-		case lexer.RETURN:
+		case CLASS:
+		case FUN:
+		case VAR:
+		case FOR:
+		case IF:
+		case WHILE:
+		case RETURN:
 			return
 		}
 
@@ -296,11 +294,11 @@ func (p *Parser) Declaration() Stmt {
 		}
 	}()
 
-	if p.match(lexer.FUN) {
+	if p.match(FUN) {
 		return p.Function("function")
 	}
 
-	if p.match(lexer.VAR) {
+	if p.match(VAR) {
 		return p.VarDeclaration()
 	}
 
@@ -308,70 +306,70 @@ func (p *Parser) Declaration() Stmt {
 }
 
 func (p *Parser) Function(kind string) Stmt {
-	name := p.consume(lexer.IDENTIFIER, "Expect "+kind+" name.")
-	p.consume(lexer.LEFT_PAREN, "Expect '(' after "+kind+" name.")
-	parameters := []lexer.Token{}
-	if !p.check(lexer.RIGHT_PAREN) {
+	name := p.consume(IDENTIFIER, "Expect "+kind+" name.")
+	p.consume(LEFT_PAREN, "Expect '(' after "+kind+" name.")
+	parameters := []Token{}
+	if !p.check(RIGHT_PAREN) {
 		for {
 			if len(parameters) >= 255 {
-				r2loxerrors.Errors(p.peek().Line, "Can't have more than 255 parameters.")
+				Errors(p.peek().Line, "Can't have more than 255 parameters.")
 			}
-			parameters = append(parameters, p.consume(lexer.IDENTIFIER, "Expect parameter name."))
-			if !p.match(lexer.COMMA) {
+			parameters = append(parameters, p.consume(IDENTIFIER, "Expect parameter name."))
+			if !p.match(COMMA) {
 				break
 			}
 		}
 	}
-	p.consume(lexer.RIGHT_PAREN, "Expect ')' after parameters.")
+	p.consume(RIGHT_PAREN, "Expect ')' after parameters.")
 
-	p.consume(lexer.LEFT_BRACE, "Expect '{' before "+kind+" body.")
+	p.consume(LEFT_BRACE, "Expect '{' before "+kind+" body.")
 
 	body := p.Block()
 	return Function{Name: name, Parameters: parameters, Body: body, Closure: nil}
 }
 
 func (p *Parser) VarDeclaration() Stmt {
-	name := p.consume(lexer.IDENTIFIER, "Expect variable name.")
+	name := p.consume(IDENTIFIER, "Expect variable name.")
 
-	if p.match(lexer.EQUAL) {
+	if p.match(EQUAL) {
 		initializer := p.Expression()
-		p.consume(lexer.SEMICOLON, "Expect ';' after variable declaration.")
+		p.consume(SEMICOLON, "Expect ';' after variable declaration.")
 		return Var{Name: name, InitializerVal: initializer}
 	}
-	if p.match(lexer.LEFT_BRACKET) {
-		p.consume(lexer.RIGHT_BRACKET, "Expect ']' after arguments.")
-		p.consume(lexer.EQUAL, "Expect '=' after ']'.")
-		p.consume(lexer.LEFT_BRACKET, "Expect '[' after '='.")
+	if p.match(LEFT_BRACKET) {
+		p.consume(RIGHT_BRACKET, "Expect ']' after arguments.")
+		p.consume(EQUAL, "Expect '=' after ']'.")
+		p.consume(LEFT_BRACKET, "Expect '[' after '='.")
 		initializer := p.Array()
-		p.consume(lexer.SEMICOLON, "Expect ';' after variable declaration.")
+		p.consume(SEMICOLON, "Expect ';' after variable declaration.")
 		return Var{Name: name, InitializerArray: initializer}
 	}
 
-	if p.match(lexer.LEFT_BRACE) {
-		p.consume(lexer.RIGHT_BRACE, "Expect '}' after arguments..")
-		p.consume(lexer.EQUAL, "Expect '=' after '}'.")
-		p.consume(lexer.LEFT_BRACE, "Expect '{' after '='.")
+	if p.match(LEFT_BRACE) {
+		p.consume(RIGHT_BRACE, "Expect '}' after arguments..")
+		p.consume(EQUAL, "Expect '=' after '}'.")
+		p.consume(LEFT_BRACE, "Expect '{' after '='.")
 		initializer := p.Map()
-		p.consume(lexer.SEMICOLON, "Expect ';' after variable declaration.")
+		p.consume(SEMICOLON, "Expect ';' after variable declaration.")
 		return Var{Name: name, InitializerMap: initializer}
 	}
 
-	p.consume(lexer.SEMICOLON, "Expect ';' after variable declaration.")
+	p.consume(SEMICOLON, "Expect ';' after variable declaration.")
 	return Var{Name: name, InitializerVal: nil}
 }
 
 func (p *Parser) Array() []Expr {
 	initializer := []Expr{}
 
-	if !p.check(lexer.RIGHT_BRACKET) {
+	if !p.check(RIGHT_BRACKET) {
 		for {
 			if len(initializer) >= 255 {
-				r2loxerrors.Errors(p.peek().Line, "Can't have more than 255 arguments.")
+				Errors(p.peek().Line, "Can't have more than 255 arguments.")
 			}
 			expr := p.Expression()
 
-			if p.match(lexer.DOT) {
-				p.consume(lexer.DOT, "Expect '.' after arguments.")
+			if p.match(DOT) {
+				p.consume(DOT, "Expect '.' after arguments.")
 				literal := p.Expression()
 
 				start := int(expr.(Literal).Value.(float64))
@@ -379,25 +377,25 @@ func (p *Parser) Array() []Expr {
 				for i := start; i <= end; i++ {
 					initializer = append(initializer, Literal{Value: float64(i)})
 				}
-			} else if p.match(lexer.LEFT_BRACKET) {
+			} else if p.match(LEFT_BRACKET) {
 				subarray := p.Array()
-				subVar := Var{Name: lexer.Token{Type: lexer.IDENTIFIER, Lexeme: "subarray-" + uuid.NewString()}, Sub: true, InitializerArray: subarray}
+				subVar := Var{Name: Token{Type: IDENTIFIER, Lexeme: "subarray-" + uuid.NewString()}, Sub: true, InitializerArray: subarray}
 				initializer = append(initializer, subVar)
-			} else if p.match(lexer.LEFT_BRACE) {
+			} else if p.match(LEFT_BRACE) {
 				submap := p.Map()
-				subVar := Var{Name: lexer.Token{Type: lexer.IDENTIFIER, Lexeme: "submap-" + uuid.NewString()}, Sub: true, InitializerMap: submap}
+				subVar := Var{Name: Token{Type: IDENTIFIER, Lexeme: "submap-" + uuid.NewString()}, Sub: true, InitializerMap: submap}
 				initializer = append(initializer, subVar)
 			} else {
 				initializer = append(initializer, expr)
 			}
 
-			if !p.match(lexer.COMMA) {
+			if !p.match(COMMA) {
 				break
 			}
 		}
 	}
 
-	p.consume(lexer.RIGHT_BRACKET, "Expect ']' after arguments.")
+	p.consume(RIGHT_BRACKET, "Expect ']' after arguments.")
 
 	return initializer
 }
@@ -405,59 +403,59 @@ func (p *Parser) Array() []Expr {
 func (p *Parser) Map() []ItemVar {
 	initializer := []ItemVar{}
 
-	if !p.check(lexer.RIGHT_BRACE) {
+	if !p.check(RIGHT_BRACE) {
 		for {
 			if len(initializer) >= 255 {
-				r2loxerrors.Errors(p.peek().Line, "Can't have more than 255 arguments.")
+				Errors(p.peek().Line, "Can't have more than 255 arguments.")
 			}
 			key := p.Expression()
-			p.consume(lexer.COLON, "Expect ':' after key.")
+			p.consume(COLON, "Expect ':' after key.")
 
-			if p.match(lexer.LEFT_BRACKET) {
+			if p.match(LEFT_BRACKET) {
 				subarray := p.Array()
-				subVar := Var{Name: lexer.Token{Type: lexer.IDENTIFIER, Lexeme: "subarray-" + uuid.NewString()}, Sub: true, InitializerArray: subarray}
+				subVar := Var{Name: Token{Type: IDENTIFIER, Lexeme: "subarray-" + uuid.NewString()}, Sub: true, InitializerArray: subarray}
 				initializer = append(initializer, ItemVar{Key: key, Value: subVar})
-			} else if p.match(lexer.LEFT_BRACE) {
+			} else if p.match(LEFT_BRACE) {
 				submap := p.Map()
-				subVar := Var{Name: lexer.Token{Type: lexer.IDENTIFIER, Lexeme: "submap-" + uuid.NewString()}, Sub: true, InitializerMap: submap}
+				subVar := Var{Name: Token{Type: IDENTIFIER, Lexeme: "submap-" + uuid.NewString()}, Sub: true, InitializerMap: submap}
 				initializer = append(initializer, ItemVar{Key: key, Value: subVar})
 			} else {
 				value := p.Expression()
 				initializer = append(initializer, ItemVar{Key: key, Value: value})
 			}
 
-			if !p.match(lexer.COMMA) {
+			if !p.match(COMMA) {
 				break
 			}
 		}
 	}
 
-	p.consume(lexer.RIGHT_BRACE, "Expect '}' after arguments.")
+	p.consume(RIGHT_BRACE, "Expect '}' after arguments.")
 	return initializer
 }
 
 func (p *Parser) Statement() Stmt {
-	/*if p.match(lexer.PRINT) {
+	/*if p.match(PRINT) {
 		return p.PrintStatement()
 	}*/
 
-	if p.match(lexer.LEFT_BRACE) {
+	if p.match(LEFT_BRACE) {
 		return Block{Statements: p.Block()}
 	}
 
-	if p.match(lexer.IF) {
+	if p.match(IF) {
 		return p.IfStatement()
 	}
 
-	if p.match(lexer.RETURN) {
+	if p.match(RETURN) {
 		return p.ReturnStatement()
 	}
 
-	if p.match(lexer.WHILE) {
+	if p.match(WHILE) {
 		return p.WhileStatement()
 	}
 
-	if p.match(lexer.FOR) {
+	if p.match(FOR) {
 		return p.ForStatement()
 	}
 
@@ -467,22 +465,22 @@ func (p *Parser) Statement() Stmt {
 func (p *Parser) Block() []Stmt {
 	statements := []Stmt{}
 
-	for !p.check(lexer.RIGHT_BRACE) && !p.isAtEnd() {
+	for !p.check(RIGHT_BRACE) && !p.isAtEnd() {
 		statements = append(statements, p.Declaration())
 	}
 
-	p.consume(lexer.RIGHT_BRACE, "Expect '}' after block.")
+	p.consume(RIGHT_BRACE, "Expect '}' after block.")
 	return statements
 }
 
 func (p *Parser) IfStatement() Stmt {
-	p.consume(lexer.LEFT_PAREN, "Expect '(' after 'if'.")
+	p.consume(LEFT_PAREN, "Expect '(' after 'if'.")
 	condition := p.Expression()
-	p.consume(lexer.RIGHT_PAREN, "Expect ')' after if condition.")
+	p.consume(RIGHT_PAREN, "Expect ')' after if condition.")
 
 	thenBranch := p.Statement()
 	var elseBranch Stmt
-	if p.match(lexer.ELSE) {
+	if p.match(ELSE) {
 		elseBranch = p.Statement()
 	}
 
@@ -491,9 +489,9 @@ func (p *Parser) IfStatement() Stmt {
 
 // while
 func (p *Parser) WhileStatement() Stmt {
-	p.consume(lexer.LEFT_PAREN, "Expect '(' after 'while'.")
+	p.consume(LEFT_PAREN, "Expect '(' after 'while'.")
 	condition := p.Expression()
-	p.consume(lexer.RIGHT_PAREN, "Expect ')' after while condition.")
+	p.consume(RIGHT_PAREN, "Expect ')' after while condition.")
 
 	body := p.Statement()
 
@@ -502,27 +500,27 @@ func (p *Parser) WhileStatement() Stmt {
 
 // for
 func (p *Parser) ForStatement() Stmt {
-	p.consume(lexer.LEFT_PAREN, "Expect '(' after 'for'.")
+	p.consume(LEFT_PAREN, "Expect '(' after 'for'.")
 	var initializer Stmt
-	if p.match(lexer.SEMICOLON) {
+	if p.match(SEMICOLON) {
 		initializer = nil
-	} else if p.match(lexer.VAR) {
+	} else if p.match(VAR) {
 		initializer = p.VarDeclaration()
 	} else {
 		initializer = p.ExpressionStatement()
 	}
 
 	var condition Expr
-	if !p.check(lexer.SEMICOLON) {
+	if !p.check(SEMICOLON) {
 		condition = p.Expression()
 	}
-	p.consume(lexer.SEMICOLON, "Expect ';' after loop condition.")
+	p.consume(SEMICOLON, "Expect ';' after loop condition.")
 
 	var increment Expr
-	if !p.check(lexer.RIGHT_PAREN) {
+	if !p.check(RIGHT_PAREN) {
 		increment = p.Expression()
 	}
-	p.consume(lexer.RIGHT_PAREN, "Expect ')' after for clauses.")
+	p.consume(RIGHT_PAREN, "Expect ')' after for clauses.")
 
 	body := p.Statement()
 
@@ -546,7 +544,7 @@ func (p *Parser) Call() Expr {
 	expr := p.Primary()
 
 	for {
-		if p.match(lexer.LEFT_PAREN) {
+		if p.match(LEFT_PAREN) {
 			expr = p.finishCall(expr)
 		} else {
 			break
@@ -559,19 +557,19 @@ func (p *Parser) Call() Expr {
 func (p *Parser) finishCall(callee Expr) Expr {
 	arguments := []Expr{}
 
-	if !p.check(lexer.RIGHT_PAREN) {
+	if !p.check(RIGHT_PAREN) {
 		for {
 			if len(arguments) >= 255 {
-				r2loxerrors.Errors(p.peek().Line, "Can't have more than 255 arguments.")
+				Errors(p.peek().Line, "Can't have more than 255 arguments.")
 			}
 			arguments = append(arguments, p.Expression())
-			if !p.match(lexer.COMMA) {
+			if !p.match(COMMA) {
 				break
 			}
 		}
 	}
 
-	paren := p.consume(lexer.RIGHT_PAREN, "Expect ')' after arguments.")
+	paren := p.consume(RIGHT_PAREN, "Expect ')' after arguments.")
 
 	return Call{Callee: callee, Paren: paren, Arguments: arguments}
 }
@@ -579,13 +577,13 @@ func (p *Parser) finishCall(callee Expr) Expr {
 /*
 func (p *Parser) PrintStatement() Stmt {
 	value := p.Expression()
-	p.consume(lexer.SEMICOLON, "Expect ';' after value.")
+	p.consume(SEMICOLON, "Expect ';' after value.")
 	return Print{Expression: value}
 }*/
 
 func (p *Parser) ExpressionStatement() Stmt {
 	expr := p.Expression()
-	p.consume(lexer.SEMICOLON, "Expect ';' after expression.")
+	p.consume(SEMICOLON, "Expect ';' after expression.")
 	return Expression{Expression: expr}
 }
 
@@ -612,7 +610,7 @@ func (p *Parser) isAtEnd() bool {
 	return p.Current >= len(p.Tokens)
 }
 
-func (p *Parser) advance() lexer.Token {
+func (p *Parser) advance() Token {
 	if !p.isAtEnd() {
 		p.Current++
 	}

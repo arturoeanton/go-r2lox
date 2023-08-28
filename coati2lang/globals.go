@@ -1,4 +1,4 @@
-package globals
+package coati2lang
 
 var (
 	ERROR_FILE_NOT_FOUND = 41

@@ -1,4 +1,4 @@
-package parser
+package coati2lang
 
 type Enviroment struct {
 	Enclosing *Enviroment

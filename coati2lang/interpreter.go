@@ -1,4 +1,4 @@
-package parser
+package coati2lang
 
 import (
 	"errors"
@@ -7,8 +7,6 @@ import (
 	"math"
 	"strings"
 	"time"
-
-	"github.com/arturoeanton/go-r2lox/lexer"
 )
 
 var (
@@ -119,7 +117,7 @@ func (i *Interpreter) VisitIfStmt(stmt If) interface{} {
 
 func (i *Interpreter) VisitLogicalExpr(expr Logical) interface{} {
 	left := i.evaluate(expr.Left)
-	if expr.Operator.Type == lexer.OR {
+	if expr.Operator.Type == OR {
 		if i.isTruthy(left) {
 			return left
 		}
@@ -183,11 +181,11 @@ func (i *Interpreter) VisitBinaryExpr(expr Binary) interface{} {
 	right := i.evaluate(expr.Right)
 
 	switch expr.Operator.Type {
-	case lexer.MINUS:
+	case MINUS:
 		return left.(float64) - right.(float64)
-	case lexer.PERCENT:
+	case PERCENT:
 		return (left.(float64) * right.(float64) / 100.0)
-	case lexer.PLUS:
+	case PLUS:
 		{
 			if _, ok := left.(float64); ok {
 				return left.(float64) + right.(float64)
@@ -197,11 +195,11 @@ func (i *Interpreter) VisitBinaryExpr(expr Binary) interface{} {
 			}
 			return nil
 		}
-	case lexer.SLASH:
+	case SLASH:
 		return left.(float64) / right.(float64)
-	case lexer.STAR_STAR:
+	case STAR_STAR:
 		return math.Pow(left.(float64), right.(float64))
-	case lexer.STAR:
+	case STAR:
 		// validate rigth is string
 		{
 			_, right_is_string := right.(string)
@@ -231,17 +229,17 @@ func (i *Interpreter) VisitBinaryExpr(expr Binary) interface{} {
 
 			return nil
 		}
-	case lexer.GREATER:
+	case GREATER:
 		return left.(float64) > right.(float64)
-	case lexer.GREATER_EQUAL:
+	case GREATER_EQUAL:
 		return left.(float64) >= right.(float64)
-	case lexer.LESS:
+	case LESS:
 		return left.(float64) < right.(float64)
-	case lexer.LESS_EQUAL:
+	case LESS_EQUAL:
 		return left.(float64) <= right.(float64)
-	case lexer.BANG_EQUAL:
+	case BANG_EQUAL:
 		return !i.isEqual(left, right)
-	case lexer.EQUAL_EQUAL:
+	case EQUAL_EQUAL:
 		return i.isEqual(left, right)
 	default:
 		return nil
@@ -268,13 +266,13 @@ func (i *Interpreter) VisitUnaryExpr(expr Unary) interface{} {
 	value := i.evaluate(expr.Value)
 
 	switch expr.Operator.Type {
-	case lexer.MINUS:
+	case MINUS:
 		return -(value.(float64))
-	case lexer.PLUS_PLUS:
+	case PLUS_PLUS:
 		return value.(float64) + 1
-	case lexer.MINUS_MINUS:
+	case MINUS_MINUS:
 		return value.(float64) - 1
-	case lexer.BANG:
+	case BANG:
 		return !(i.isTruthy(value))
 	default:
 		return nil

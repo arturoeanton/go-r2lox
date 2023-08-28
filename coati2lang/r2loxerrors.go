@@ -1,10 +1,8 @@
-package r2loxerrors
+package coati2lang
 
 import (
 	"fmt"
 	"os"
-
-	"github.com/arturoeanton/go-r2lox/globals"
 )
 
 func Errors(line int, message string) string {
@@ -14,9 +12,9 @@ func Errors(line int, message string) string {
 
 func Report(line int, where, message string) string {
 	report_str := fmt.Sprintf("[line %d] Error%s: %s\n", line, where, message)
-	if globals.PrintFlag {
+	if PrintFlag {
 		fmt.Fprintf(os.Stderr, "%s", report_str)
 	}
-	globals.HasError = true
+	HasError = true
 	return report_str
 }

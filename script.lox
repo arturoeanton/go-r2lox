@@ -14,7 +14,6 @@ if (true or false) {
     println("no if true");
 }
 
-
 println("hi" or 2; // h)i
 println(nil or "yes"; // ye)s
 

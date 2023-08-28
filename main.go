@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/arturoeanton/go-r2lox/globals"
-	"github.com/arturoeanton/go-r2lox/lexer"
-	"github.com/arturoeanton/go-r2lox/parser"
+	"github.com/arturoeanton/go-r2lox/coati2lang"
 )
 
 func runFile(path string) (string, error) {
@@ -32,16 +30,16 @@ func runPrompt() {
 		}
 
 		run(line)
-		globals.HasError = false
+		coati2lang.HasError = false
 	}
 }
 
 func run(source string) {
-	tokens := lexer.ScanTokens(source)
-	parse := parser.NewParser(tokens)
+	tokens := coati2lang.ScanTokens(source)
+	parse := coati2lang.NewParser(tokens)
 
 	expr := parse.Parse()
-	interp := parser.NewInterpreter(expr)
+	interp := coati2lang.NewInterpreter(expr)
 	interp.Interpret()
 
 }
@@ -55,11 +53,11 @@ func main() {
 
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %s\n", err)
-			os.Exit(globals.ERROR_FILE_NOT_FOUND)
+			os.Exit(coati2lang.ERROR_FILE_NOT_FOUND)
 		}
 		run(source)
-		if globals.HasError {
-			os.Exit(globals.ERROR_SYNTAX)
+		if coati2lang.HasError {
+			os.Exit(coati2lang.ERROR_SYNTAX)
 		}
 	} else {
 		//runPrompt()
@@ -98,8 +96,6 @@ func main() {
 		println("aa:",frases[0][1]);
 
 		println(b["key1","jaja"]);
-		
-
 		`
 		run(source)
 	}

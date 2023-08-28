@@ -1,6 +1,4 @@
-package parser
-
-import "github.com/arturoeanton/go-r2lox/lexer"
+package coati2lang
 
 type Expr interface {
 	AcceptExpr(visitor Visitor) interface{}
@@ -33,7 +31,7 @@ type Visitor interface {
 
 type Binary struct {
 	Left     Expr
-	Operator lexer.Token
+	Operator Token
 	Right    Expr
 }
 
@@ -66,7 +64,7 @@ func (l Literal) AcceptExpr(visitor Visitor) interface{} {
 }
 
 type Unary struct {
-	Operator lexer.Token
+	Operator Token
 	Value    Expr
 }
 
@@ -99,7 +97,7 @@ func (p Print) AcceptStmt(visitor Visitor) interface{} {
 }*/
 
 type Var struct {
-	Name             lexer.Token
+	Name             Token
 	InitializerVal   Expr
 	InitializerArray []Expr
 	InitializerMap   []ItemVar
@@ -121,7 +119,7 @@ func (v Var) AcceptStmt(visitor Visitor) interface{} {
 }
 
 type Assign struct {
-	Name      lexer.Token
+	Name      Token
 	Value     Expr
 	Selectors [][]Expr
 	Sub       bool
@@ -133,8 +131,8 @@ func (a Assign) AcceptExpr(visitor Visitor) interface{} {
 }
 
 type Fun struct {
-	Name       lexer.Token
-	Parameters []lexer.Token
+	Name       Token
+	Parameters []Token
 	Body       []Stmt
 }
 
@@ -144,7 +142,7 @@ func (f Fun) AcceptExpr(visitor Visitor) interface{} {
 
 type Call struct {
 	Callee    Expr
-	Paren     lexer.Token
+	Paren     Token
 	Arguments []Expr
 }
 
@@ -153,7 +151,7 @@ func (c Call) AcceptExpr(visitor Visitor) interface{} {
 }
 
 type This struct {
-	Keyword lexer.Token
+	Keyword Token
 }
 
 func (t This) AcceptExpr(visitor Visitor) interface{} {
@@ -161,9 +159,9 @@ func (t This) AcceptExpr(visitor Visitor) interface{} {
 }
 
 type Super struct {
-	Keyword lexer.Token
+	Keyword Token
 
-	Method lexer.Token
+	Method Token
 }
 
 func (s Super) AcceptExpr(visitor Visitor) interface{} {
@@ -171,7 +169,7 @@ func (s Super) AcceptExpr(visitor Visitor) interface{} {
 }
 
 type Class struct {
-	Name       lexer.Token
+	Name       Token
 	Methods    []Fun
 	Superclass Var
 }
@@ -208,7 +206,7 @@ func (b Block) AcceptStmt(visitor Visitor) interface{} {
 }
 
 type Return struct {
-	Keyword lexer.Token
+	Keyword Token
 	Value   Expr
 	Result  interface{}
 }
@@ -218,7 +216,7 @@ func (r Return) AcceptStmt(visitor Visitor) interface{} {
 }
 
 type Break struct {
-	Keyword lexer.Token
+	Keyword Token
 }
 
 func (b Break) AcceptExpr(visitor Visitor) interface{} {
@@ -226,7 +224,7 @@ func (b Break) AcceptExpr(visitor Visitor) interface{} {
 }
 
 type Continue struct {
-	Keyword lexer.Token
+	Keyword Token
 }
 
 func (c Continue) AcceptExpr(visitor Visitor) interface{} {
@@ -235,7 +233,7 @@ func (c Continue) AcceptExpr(visitor Visitor) interface{} {
 
 type Logical struct {
 	Left     Expr
-	Operator lexer.Token
+	Operator Token
 	Right    Expr
 }
 
@@ -245,8 +243,8 @@ func (l Logical) AcceptExpr(visitor Visitor) interface{} {
 }
 
 type Function struct {
-	Name       lexer.Token
-	Parameters []lexer.Token
+	Name       Token
+	Parameters []Token
 	Body       []Stmt
 	Closure    *Enviroment
 }

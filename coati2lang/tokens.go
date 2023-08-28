@@ -1,4 +1,4 @@
-package lexer
+package coati2lang
 
 import (
 	"fmt"
