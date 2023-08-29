@@ -39,16 +39,23 @@ var persona{} = {
         println("\tcalle",this.direccion.calle);
         println("\tnumero",this.direccion.numero);
     }
+
+    getNombre => () {
+        return this.nombre;
+    }
+
+    suma => (a,b) {
+        return a+b;
+    }
   
 };
 
 
 
 
-var alejandro = persona.new("alejandro","perez",30,"calle falsa",123);
+var alejandro = persona.new("alejandro","perez",33,"calle falsa",123);
 
-var pedro = persona.new("pedro","gonzalez",40,"calle r
-e falsa",111);
+var pedro = persona.new("pedro","gonzalez",40,"calle re falsa",111);
 var juan = persona.new("juan","gomez",50, "calle re re falsa", 222);
 
 alejandro.info();
@@ -58,3 +65,25 @@ juan.info();
 var personas[1] ;
 
 println("personas",personas);
+
+var hola = """
+    Hola
+    como estas?
+""";
+
+var b = 5;
+
+var template1 = """
+    ${juan.suma(alejandro.edad,2)}
+    ${alejandro.getNombre()}
+    *${juan.direccion.calle}*
+""";
+fun escribir () {
+    println("hola", juan.apellido.upper());
+    println("nombre:",juan.getNombre());
+   println("hola:",template1.template());
+}
+escribir();
+var aaa = "1,2,3,4,5,6,7,8,9,10";
+
+println (aaa.split(","));

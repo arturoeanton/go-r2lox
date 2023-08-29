@@ -137,6 +137,7 @@ type Call struct {
 	Paren     Token
 	Arguments []Expr
 	This      Var
+	SubCall   *Call
 }
 
 func (c Call) AcceptExpr(visitor Visitor) interface{} {

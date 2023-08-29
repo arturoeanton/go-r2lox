@@ -8,48 +8,50 @@ type TokenType int
 
 const (
 	// Single-character tokens.
-	LEFT_PAREN    TokenType = iota //[ok]
-	RIGHT_PAREN                    //[ok]
-	LEFT_BRACE                     //[ok]
-	RIGHT_BRACE                    //[ok]
-	LEFT_BRACKET                   //[]
-	RIGHT_BRACKET                  //[]
-	COMMA                          //[ok]
-	DOT                            //[]
-	MINUS                          //[ok]
-	PLUS                           //[ok]
+	LEFT_PAREN    TokenType = iota //[ok] (
+	RIGHT_PAREN                    //[ok] )
+	LEFT_BRACE                     //[ok] {
+	RIGHT_BRACE                    //[ok]  }
+	LEFT_BRACKET                   //[ok]  [
+	RIGHT_BRACKET                  //[ok]  ]
+	COMMA                          //[ok] ,
+	DOT                            //[ok] .
+	MINUS                          //[ok] -
+	PLUS                           //[ok] +
 	SEMICOLON                      //[ok] ;
-	SLASH                          //[ok]
-	STAR                           //[ok]
+	SLASH                          //[ok] /
+	STAR                           //[ok] *
 	PERCENT                        //[ok] %
-	COLON                          //[] :
+	COLON                          //[ok] :
 	QUESTION                       //[] ?
 	CARET                          //[] ^
 	AMPERSAND                      //[] &
 
 	// One or two character tokens.
-	BANG          //[ok]
-	BANG_EQUAL    //[ok]
-	EQUAL         //[ok]
-	EQUAL_EQUAL   //[ok]
-	GREATER       //[ok]
-	GREATER_EQUAL //[ok]
-	LESS          //[ok]
-	LESS_EQUAL    //[ok]
-	PLUS_PLUS     //[ok]
-	MINUS_MINUS   //[ok]
-	STAR_STAR     //[ok]
-	ARROW         //[]
-	LEFT          //[]
-	RIGHT         //[]
+	BANG          //[ok] !
+	BANG_EQUAL    //[ok] !=
+	EQUAL         //[ok] =
+	EQUAL_EQUAL   //[ok] ==
+	GREATER       //[ok] >
+	GREATER_EQUAL //[ok] >=
+	LESS          //[ok] <
+	LESS_EQUAL    //[ok] <=
+	PLUS_PLUS     //[ok] ++
+	MINUS_MINUS   //[ok] --
+	STAR_STAR     //[ok] **
+	ARROW         //[] ->
+	LEFT          //[] <<
+	RIGHT         //[] >>
 	PIPE          //[OK] ABS
-	OR_OR         //[]
-	AND_AND       //[]
+	OR_OR         //[] ||
+	AND_AND       //[] &&
 
 	// Literals.
-	IDENTIFIER //[ok]
-	STRING     //[ok]
-	NUMBER     //[ok]
+	IDENTIFIER       //[ok]
+	STRING           //[ok] ""
+	MULTILINE_STRING //[ok] """ """
+	TEMPLATE_STRING  //[ok] ``
+	NUMBER           //[ok]
 
 	// Keywords.
 	AND        //[ok]

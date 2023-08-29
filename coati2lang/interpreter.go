@@ -82,6 +82,16 @@ func (i *Interpreter) VisitFunctionStmt(stmt Function) interface{} {
 
 func (i *Interpreter) VisitCallExpr(expr Call) interface{} {
 	callee := i.evaluate(expr.Callee)
+
+	if variable, ok := expr.Callee.(Var); ok {
+		value := i.evaluate(variable)
+		if str, ok := value.(string); ok {
+			fx := variable.Selectors[len(variable.Selectors)-1][0].(Literal).Value.(string)
+
+			return STRING_FX_MAP[fx](str, i, expr.Arguments)
+		}
+	}
+
 	var arguments []interface{}
 	for _, argument := range expr.Arguments {
 		arguments = append(arguments, i.evaluate(argument))

@@ -142,7 +142,7 @@ func (p *Parser) primary() Expr {
 		return Literal{Value: nil}
 	}
 
-	if p.match(NUMBER, STRING) {
+	if p.match(NUMBER, STRING, MULTILINE_STRING, TEMPLATE_STRING) {
 		return Literal{Value: p.previous().Literal}
 	}
 
@@ -351,7 +351,7 @@ func (p *Parser) VarDeclaration() Stmt {
 
 	if p.match(EQUAL) {
 		initializer := p.Expression()
-		p.consume(SEMICOLON, "Expect ';' after variable declaration.")
+		p.consume(SEMICOLON, "Expect ';' after variable declaration.(0)")
 		return Var{Name: name, InitializerVal: initializer}
 	}
 	if p.match(LEFT_BRACKET) {
@@ -369,7 +369,7 @@ func (p *Parser) VarDeclaration() Stmt {
 					Errors(size.Line, "Size of array and number of arguments must be the same.")
 				}
 			}
-			p.consume(SEMICOLON, "Expect ';' after variable declaration.")
+			p.consume(SEMICOLON, "Expect ';' after variable declaration.(1)")
 
 			return Var{Name: name, InitializerArray: inizializer, SizeArrayInit: size_declarate}
 		}
@@ -379,11 +379,11 @@ func (p *Parser) VarDeclaration() Stmt {
 			p.consume(EQUAL, "Expect '=' after ']'.")
 			p.consume(LEFT_BRACKET, "Expect '[' after '='.")
 			initializer := p.Array()
-			p.consume(SEMICOLON, "Expect ';' after variable declaration.")
+			p.consume(SEMICOLON, "Expect ';' after variable declaration.(2)")
 			return Var{Name: name, InitializerArray: initializer, SizeArrayInit: len(initializer)}
 		}
 
-		p.consume(SEMICOLON, "Expect ';' after variable declaration.")
+		p.consume(SEMICOLON, "Expect ';' after variable declaration.(3)")
 		return Var{Name: name, InitializerArray: inizializer, SizeArrayInit: 0}
 	}
 
@@ -392,11 +392,11 @@ func (p *Parser) VarDeclaration() Stmt {
 		p.consume(EQUAL, "Expect '=' after '}'.")
 		p.consume(LEFT_BRACE, "Expect '{' after '='.")
 		initializer := p.Map()
-		p.consume(SEMICOLON, "Expect ';' after variable declaration.")
+		p.consume(SEMICOLON, "Expect ';' after variable declaration.(4)")
 		return Var{Name: name, InitializerMap: initializer}
 	}
 
-	p.consume(SEMICOLON, "Expect ';' after variable declaration.")
+	p.consume(SEMICOLON, "Expect ';' after variable declaration.(5)")
 	return Var{Name: name, InitializerVal: nil}
 }
 
@@ -650,9 +650,20 @@ func (p *Parser) finishCall(callee Expr) Expr {
 		}
 	}
 
+	var call *Call
+	if p.check(DOT) {
+		p.consume(DOT, "Expect '.' after arguments.")
+		literal := p.Expression()
+		if call1, ok := literal.(Call); ok {
+			call = &call1
+		} else {
+			Errors(p.peek().Line, "Invalid call.")
+		}
+	}
+
 	paren := p.consume(RIGHT_PAREN, "Expect ')' after arguments.")
 
-	return Call{Callee: callee, Paren: paren, Arguments: arguments, This: this}
+	return Call{Callee: callee, Paren: paren, Arguments: arguments, This: this, SubCall: call}
 }
 
 func (p *Parser) ExpressionStatement() Stmt {

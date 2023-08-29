@@ -182,7 +182,11 @@ func (s *Scanner) scanToken() {
 	case '\n':
 		s.Line++
 	case '"':
-		s.string()
+		if s.peek() == '"' && s.peekNext() == '"' {
+			s.multiline_string()
+		} else {
+			s.string()
+		}
 
 	default:
 		if s.isDigit(c) {
@@ -261,6 +265,31 @@ func (s *Scanner) peek() rune {
 		return '\x00' // Carácter nulo en Go
 	}
 	return rune(s.Source[s.Current])
+}
+
+func (s *Scanner) multiline_string() {
+
+	s.advance()
+	s.advance()
+
+	for s.peek() != '"' && !s.isAtEnd() {
+		if s.peek() == '\n' {
+			s.Line++
+		}
+		s.advance()
+	}
+	s.advance()
+	s.advance()
+	s.advance()
+
+	if s.isAtEnd() {
+		Errors(s.Line, "Unterminated string.")
+		return
+	}
+
+	value := s.Source[s.Start+3 : s.Current-3]
+
+	s.addToken(STRING, value)
 }
 
 func (s *Scanner) string() {
