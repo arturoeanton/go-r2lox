@@ -1,12 +1,16 @@
 var persona{} = {
-    "nombre": "pepe", 
-    "apellido": "perez",
-    "edad": 30,
-    "direccion": {
-        "calle": "definir calle",
-        "numero": -90
-    },
-    "new": fun (nombre,apellido,edad, calle, numero) {
+    nombre: "pepe"
+    apellido: "perez"
+    edad: 30
+    
+    direccion: {
+        calle: "definir calle";
+        numero: -90;
+    }
+    
+    nu1mero: "";
+    
+    new => (nombre,apellido,edad, calle, numero) {
         this.nombre = nombre;
         this.apellido = apellido;
         this.edad = edad;
@@ -14,25 +18,31 @@ var persona{} = {
         this.direccion.calle = calle;
         this.direccion.numero = numero;
         return clone(this);
-    },
-    "info": fun () {
-        println("nombre",this.nombre);
-        println("apellido",this.apellido);
-        println("edad",this.edad);
-        println("calle",this.direccion.calle);
-        println("numero",this.direccion.numero);
-    },
-    "saludar": fun () {
+    }
+
+    saludar => () {
         println("hola",this.nombre);
-    },
-    "despedirse": fun () {
+    }
+
+    despedirse => () {
         println("chau",this.nombre);
-    },
-    "edad": fun () {
+    }
+
+    edad  => () {
         println("edad",this.edad);
     }
 
+    info => () {
+        println("nombre",this.nombre);
+        println("\tapellido",this.apellido);
+        println("\tedad",this.edad);
+        println("\tcalle",this.direccion.calle);
+        println("\tnumero",this.direccion.numero);
+    }
+  
 };
+
+
 
 
 var alejandro = persona.new("alejandro","perez",30,"calle falsa",123);
@@ -43,3 +53,7 @@ var juan = persona.new("juan","gomez",50, "calle re re falsa", 222);
 alejandro.info();
 pedro.info();
 juan.info();
+
+var personas[1] ;
+
+println("personas",personas);

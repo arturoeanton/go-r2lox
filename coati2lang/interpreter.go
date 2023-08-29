@@ -270,7 +270,7 @@ func (i *Interpreter) VisitVar(stmt Var) interface{} {
 		value = i.full_evaluate(stmt.InitializerVal)
 	}
 	if stmt.InitializerArray != nil {
-		var values []interface{} = make([]interface{}, len(stmt.InitializerArray))
+		var values []interface{} = make([]interface{}, stmt.SizeArrayInit)
 		for index, value := range stmt.InitializerArray {
 			values[index] = i.full_evaluate(value)
 		}

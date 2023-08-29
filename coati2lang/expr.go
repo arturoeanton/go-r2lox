@@ -104,6 +104,7 @@ type Var struct {
 	InitializerFx    Stmt
 	Selectors        [][]Expr
 	Sub              bool
+	SizeArrayInit    int
 }
 type ItemVar struct {
 	Key   Expr

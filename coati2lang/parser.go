@@ -2,6 +2,7 @@ package coati2lang
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/google/uuid"
 )
@@ -296,7 +297,9 @@ func (p *Parser) synchronize() {
 func (p *Parser) Declaration() Stmt {
 	defer func() {
 		if r := recover(); r != nil {
-			p.synchronize()
+			fmt.Fprintf(os.Stderr, "%s", r)
+			os.Exit(2)
+			//p.synchronize()
 		}
 	}()
 
@@ -313,6 +316,9 @@ func (p *Parser) Declaration() Stmt {
 		return p.VarDeclaration()
 	}
 
+	if p.match(EOF) {
+		return nil
+	}
 	return p.Statement()
 }
 
@@ -349,12 +355,36 @@ func (p *Parser) VarDeclaration() Stmt {
 		return Var{Name: name, InitializerVal: initializer}
 	}
 	if p.match(LEFT_BRACKET) {
+		inizializer := []Expr{}
+		if p.check(NUMBER) {
+			size := p.consume(NUMBER, "Expect size of array.")
+			size_declarate := int(size.Literal.(float64))
+			p.consume(RIGHT_BRACKET, "Expect ']' after arguments.")
+			if p.check(EQUAL) {
+				p.consume(EQUAL, "Expect '=' after ']'.")
+				p.consume(LEFT_BRACKET, "Expect '[' after '='.")
+				inizializer = p.Array()
+
+				if size_declarate != len(inizializer) {
+					Errors(size.Line, "Size of array and number of arguments must be the same.")
+				}
+			}
+			p.consume(SEMICOLON, "Expect ';' after variable declaration.")
+
+			return Var{Name: name, InitializerArray: inizializer, SizeArrayInit: size_declarate}
+		}
+
 		p.consume(RIGHT_BRACKET, "Expect ']' after arguments.")
-		p.consume(EQUAL, "Expect '=' after ']'.")
-		p.consume(LEFT_BRACKET, "Expect '[' after '='.")
-		initializer := p.Array()
+		if p.check(EQUAL) {
+			p.consume(EQUAL, "Expect '=' after ']'.")
+			p.consume(LEFT_BRACKET, "Expect '[' after '='.")
+			initializer := p.Array()
+			p.consume(SEMICOLON, "Expect ';' after variable declaration.")
+			return Var{Name: name, InitializerArray: initializer, SizeArrayInit: len(initializer)}
+		}
+
 		p.consume(SEMICOLON, "Expect ';' after variable declaration.")
-		return Var{Name: name, InitializerArray: initializer}
+		return Var{Name: name, InitializerArray: inizializer, SizeArrayInit: 0}
 	}
 
 	if p.match(LEFT_BRACE) {
@@ -421,33 +451,63 @@ func (p *Parser) Map() []ItemVar {
 
 	if !p.check(RIGHT_BRACE) {
 		for {
+
 			if len(initializer) >= 255 {
 				Errors(p.peek().Line, "Can't have more than 255 arguments.")
 			}
 			key := p.Expression()
-			p.consume(COLON, "Expect ':' after key.")
 
-			if p.match(LEFT_BRACKET) {
-				subarray := p.Array()
-				subVar := Var{Name: Token{Type: IDENTIFIER, Lexeme: "subarray-" + uuid.NewString()}, Sub: true, InitializerArray: subarray}
-				initializer = append(initializer, ItemVar{Key: key, Value: subVar})
-			} else if p.match(LEFT_BRACE) {
-				submap := p.Map()
-				subVar := Var{Name: Token{Type: IDENTIFIER, Lexeme: "submap-" + uuid.NewString()}, Sub: true, InitializerMap: submap}
-				initializer = append(initializer, ItemVar{Key: key, Value: subVar})
-			} else if p.match(FUN) {
+			if key_identifier, ok := key.(Var); ok {
+				key = Literal{Value: key_identifier.Name.Lexeme}
+			}
+
+			if p.check(ARROW) {
+				p.consume(ARROW, "Expect '=>' after key.")
 				name := Token{Type: IDENTIFIER, Lexeme: "subfx-" + uuid.NewString()}
 				subfx := p.Function("method", name)
 				subVar := Var{Name: name, Sub: true, InitializerFx: subfx.(Function)}
 				initializer = append(initializer, ItemVar{Key: key, Value: subVar})
+
 			} else {
-				value := p.Expression()
-				initializer = append(initializer, ItemVar{Key: key, Value: value})
+
+				if p.check(RIGHT_BRACE) {
+					break
+				}
+				p.consume(COLON, "Expect ':' after key.")
+
+				if p.match(LEFT_BRACKET) {
+					subarray := p.Array()
+					subVar := Var{Name: Token{Type: IDENTIFIER, Lexeme: "subarray-" + uuid.NewString()}, Sub: true, InitializerArray: subarray}
+					initializer = append(initializer, ItemVar{Key: key, Value: subVar})
+				} else if p.match(LEFT_BRACE) {
+					submap := p.Map()
+					subVar := Var{Name: Token{Type: IDENTIFIER, Lexeme: "submap-" + uuid.NewString()}, Sub: true, InitializerMap: submap}
+					initializer = append(initializer, ItemVar{Key: key, Value: subVar})
+				} else if p.match(FUN) {
+					name := Token{Type: IDENTIFIER, Lexeme: "subfx-" + uuid.NewString()}
+					subfx := p.Function("method", name)
+					subVar := Var{Name: name, Sub: true, InitializerFx: subfx.(Function)}
+					initializer = append(initializer, ItemVar{Key: key, Value: subVar})
+				} else {
+					value := p.Expression()
+					initializer = append(initializer, ItemVar{Key: key, Value: value})
+				}
+
 			}
 
-			if !p.match(COMMA) {
+			if p.check(RIGHT_BRACE) {
 				break
 			}
+			if p.check(SEMICOLON) {
+				p.consume(SEMICOLON, "Expect ';' after arguments.")
+				continue
+			}
+
+			if p.check(COMMA) {
+				p.consume(COMMA, "Expect ',' after value.")
+				continue
+			}
+
 		}
 	}
 

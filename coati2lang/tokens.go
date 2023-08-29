@@ -18,7 +18,7 @@ const (
 	DOT                            //[]
 	MINUS                          //[ok]
 	PLUS                           //[ok]
-	SEMICOLON                      //[ok]
+	SEMICOLON                      //[ok] ;
 	SLASH                          //[ok]
 	STAR                           //[ok]
 	PERCENT                        //[ok] %

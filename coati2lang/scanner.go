@@ -278,6 +278,10 @@ func (s *Scanner) string() {
 	}
 
 	value := s.Source[s.Start+1 : s.Current-1]
+	value, err := strconv.Unquote("\"" + value + "\"")
+	if err != nil {
+		Errors(s.Line, "Error parsing string.")
+	}
 	s.addToken(STRING, value)
 }
 
