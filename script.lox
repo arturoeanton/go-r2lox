@@ -47,7 +47,8 @@ var persona{} = {
 
 var alejandro = persona.new("alejandro","perez",30,"calle falsa",123);
 
-var pedro = persona.new("pedro","gonzalez",40,"calle re falsa",111);
+var pedro = persona.new("pedro","gonzalez",40,"calle r
+e falsa",111);
 var juan = persona.new("juan","gomez",50, "calle re re falsa", 222);
 
 alejandro.info();
