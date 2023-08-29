@@ -64,6 +64,7 @@ func (i *Interpreter) VisitReturnStmt(stmt Return) interface{} {
 	var result interface{}
 	if stmt.Value != nil {
 		result = i.evaluate(stmt.Value)
+
 	}
 	panic(Return{Keyword: stmt.Keyword, Value: stmt.Value, Result: result})
 }
@@ -286,20 +287,25 @@ func (i *Interpreter) VisitVar(stmt Var) interface{} {
 		value = values
 	}
 
+	if stmt.InitializerFx != nil {
+		i.VisitFunctionStmt(stmt.InitializerFx.(Function))
+		value = i.full_evaluate(Var{Name: stmt.Name, Sub: false})
+	}
+
 	i.enviroment.Define(stmt.Name.Lexeme, value)
 	return nil
 }
 
 func (i *Interpreter) VisitVariableExpr(expr Var) interface{} {
-	value := i.enviroment.Get(expr.Name.Lexeme)
+	value, ok := i.enviroment.Get(expr.Name.Lexeme)
 
-	if value == nil {
+	if !ok {
 		if expr.Sub {
 			expr.Sub = false
 			i.VisitVar(expr)
-			value = i.enviroment.Get(expr.Name.Lexeme)
+			value, ok = i.enviroment.Get(expr.Name.Lexeme)
 		}
-		if value == nil {
+		if !ok {
 			log.Fatalln("Undefined variable '" + expr.Name.Lexeme + "'.")
 		}
 	}
@@ -402,7 +408,10 @@ func (i *Interpreter) setByPath(target interface{}, path []interface{}, value in
 
 func (i *Interpreter) VisitAssignExpr(expr Assign) interface{} {
 	value := i.full_evaluate(expr.Value)
-	old := i.enviroment.Get(expr.Name.Lexeme)
+	old, ok := i.enviroment.Get(expr.Name.Lexeme)
+	if !ok {
+		log.Fatalln("Undefined variable '" + expr.Name.Lexeme + "'.")
+	}
 
 	path_var := make([]interface{}, len(expr.Selectors))
 	if len(expr.Selectors) > 0 {
@@ -411,11 +420,11 @@ func (i *Interpreter) VisitAssignExpr(expr Assign) interface{} {
 				path_var[index] = i.full_evaluate(selExpr)
 			}
 		}
-		new, err := i.setByPath(old, path_var, value)
+		_, err := i.setByPath(old, path_var, value)
 		if err != nil {
 			log.Fatalln(err)
 		}
-		i.enviroment.Assign(expr.Name.Lexeme, new)
+		//i.enviroment.Assign(expr.Name.Lexeme, new)
 		return value
 	} else {
 		i.enviroment.Assign(expr.Name.Lexeme, value)

@@ -101,6 +101,7 @@ type Var struct {
 	InitializerVal   Expr
 	InitializerArray []Expr
 	InitializerMap   []ItemVar
+	InitializerFx    Stmt
 	Selectors        [][]Expr
 	Sub              bool
 }
@@ -130,16 +131,6 @@ func (a Assign) AcceptExpr(visitor Visitor) interface{} {
 	return visitor.VisitAssignExpr(a)
 }
 
-type Fun struct {
-	Name       Token
-	Parameters []Token
-	Body       []Stmt
-}
-
-func (f Fun) AcceptExpr(visitor Visitor) interface{} {
-	return nil
-}
-
 type Call struct {
 	Callee    Expr
 	Paren     Token
@@ -149,14 +140,6 @@ type Call struct {
 
 func (c Call) AcceptExpr(visitor Visitor) interface{} {
 	return visitor.VisitCallExpr(c)
-}
-
-type This struct {
-	Keyword Token
-}
-
-func (t This) AcceptExpr(visitor Visitor) interface{} {
-	return nil
 }
 
 type Super struct {
@@ -171,7 +154,7 @@ func (s Super) AcceptExpr(visitor Visitor) interface{} {
 
 type Class struct {
 	Name       Token
-	Methods    []Fun
+	Methods    []Function
 	Superclass Var
 }
 

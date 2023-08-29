@@ -1,18 +1,45 @@
+var persona{} = {
+    "nombre": "pepe",
+    "apellido": "perez",
+    "edad": 30,
+    "direccion": {
+        "calle": "definir calle",
+        "numero": -90
+    },
+    "new": fun (nombre,apellido,edad, calle, numero) {
+        this.nombre = nombre;
+        this.apellido = apellido;
+        this.edad = edad;
+
+        this.direccion.calle = calle;
+        this.direccion.numero = numero;
+        return clone(this);
+    },
+    "info": fun () {
+        println("nombre",this.nombre);
+        println("apellido",this.apellido);
+        println("edad",this.edad);
+        println("calle",this.direccion.calle);
+        println("numero",this.direccion.numero);
+    },
+    "saludar": fun () {
+        println("hola",this.nombre);
+    },
+    "despedirse": fun () {
+        println("chau",this.nombre);
+    },
+    "edad": fun () {
+        println("edad",this.edad);
+    }
+
+};
 
 
-fun hola(a){
-    println(this["a"]);
-}
+var alejandro = persona.new("alejandro","perez",30,"calle falsa",123);
 
+var pedro = persona.new("pedro","gonzalez",40,"calle re falsa",111);
+var juan = persona.new("juan","gomez",50, "calle re re falsa", 222);
 
-
-var l{} = {"a":"first", "b":"", "pepe":{"hola":hola, "a":"second"} };
-
-
-
-l["b"] = {"c":1,"d":{ 1:"sas","s":[1,2,3] }};
-
-println(l["b"]["d"]["s"]);
-
-
-l["pepe"]["hola"]("aa");
+alejandro.info();
+pedro.info();
+juan.info();

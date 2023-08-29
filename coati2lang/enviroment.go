@@ -16,16 +16,16 @@ func (e *Enviroment) Define(name string, value interface{}) {
 	e.Values[name] = value
 }
 
-func (e *Enviroment) Get(name string) interface{} {
+func (e *Enviroment) Get(name string) (interface{}, bool) {
 	if value, ok := e.Values[name]; ok {
-		return value
+		return value, ok
 	}
 
 	if e.Enclosing != nil {
 		return e.Enclosing.Get(name)
 	}
 
-	return nil
+	return nil, false
 }
 
 func (e *Enviroment) Assign(name string, value interface{}) {

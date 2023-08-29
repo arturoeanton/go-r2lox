@@ -2,7 +2,6 @@ package coati2lang
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/google/uuid"
 )
@@ -150,9 +149,14 @@ func (p *Parser) primary() Expr {
 		name := p.previous()
 
 		selectors := [][]Expr{}
-		for p.match(LEFT_BRACKET) {
-			array := p.Array()
-			selectors = append(selectors, array)
+		for p.check(LEFT_BRACKET) || p.check(DOT) {
+			if p.match(LEFT_BRACKET) {
+				array := p.Array()
+				selectors = append(selectors, array)
+			} else if p.match(DOT) {
+				name := p.consume(IDENTIFIER, "Expect property name after '.'.")
+				selectors = append(selectors, []Expr{Literal{Value: name.Lexeme}})
+			}
 		}
 
 		return Var{Name: name, Selectors: selectors}
@@ -219,8 +223,8 @@ func (p *Parser) consume(t TokenType, message string) Token {
 		return p.advance()
 	}
 
-	log.Fatalln(message + "\n\tLine -> " + fmt.Sprint(line) + "\n\tNear ->" + p.peek().Lexeme)
-	panic(message)
+	message1 := fmt.Sprint(message, "\n\tLine -> ", fmt.Sprint(line), "\n\tNear ->"+p.peek().Lexeme)
+	panic(message1)
 }
 
 func (p *Parser) assignment() Expr {
@@ -297,7 +301,8 @@ func (p *Parser) Declaration() Stmt {
 	}()
 
 	if p.match(FUN) {
-		return p.Function("function")
+		name := p.consume(IDENTIFIER, "Expect function name.")
+		return p.Function("function", name)
 	}
 
 	if p.match(VAR) {
@@ -311,9 +316,10 @@ func (p *Parser) Declaration() Stmt {
 	return p.Statement()
 }
 
-func (p *Parser) Function(kind string) Stmt {
-	name := p.consume(IDENTIFIER, "Expect "+kind+" name.")
+func (p *Parser) Function(kind string, name Token) Stmt {
+
 	p.consume(LEFT_PAREN, "Expect '(' after "+kind+" name.")
+
 	parameters := []Token{}
 	if !p.check(RIGHT_PAREN) {
 		for {
@@ -377,7 +383,6 @@ func (p *Parser) Array() []Expr {
 			if p.match(DOT) {
 				p.consume(DOT, "Expect '.' after arguments.")
 				literal := p.Expression()
-
 				start := int(expr.(Literal).Value.(float64))
 				end := int(literal.(Literal).Value.(float64))
 				for i := start; i <= end; i++ {
@@ -390,6 +395,11 @@ func (p *Parser) Array() []Expr {
 			} else if p.match(LEFT_BRACE) {
 				submap := p.Map()
 				subVar := Var{Name: Token{Type: IDENTIFIER, Lexeme: "submap-" + uuid.NewString()}, Sub: true, InitializerMap: submap}
+				initializer = append(initializer, subVar)
+			} else if p.match(FUN) {
+				name := Token{Type: IDENTIFIER, Lexeme: "subfx-" + uuid.NewString()}
+				subfx := p.Function("method", name)
+				subVar := Var{Name: name, Sub: true, InitializerFx: subfx.(Function)}
 				initializer = append(initializer, subVar)
 			} else {
 				initializer = append(initializer, expr)
@@ -425,6 +435,11 @@ func (p *Parser) Map() []ItemVar {
 				submap := p.Map()
 				subVar := Var{Name: Token{Type: IDENTIFIER, Lexeme: "submap-" + uuid.NewString()}, Sub: true, InitializerMap: submap}
 				initializer = append(initializer, ItemVar{Key: key, Value: subVar})
+			} else if p.match(FUN) {
+				name := Token{Type: IDENTIFIER, Lexeme: "subfx-" + uuid.NewString()}
+				subfx := p.Function("method", name)
+				subVar := Var{Name: name, Sub: true, InitializerFx: subfx.(Function)}
+				initializer = append(initializer, ItemVar{Key: key, Value: subVar})
 			} else {
 				value := p.Expression()
 				initializer = append(initializer, ItemVar{Key: key, Value: value})
@@ -441,10 +456,6 @@ func (p *Parser) Map() []ItemVar {
 }
 
 func (p *Parser) Statement() Stmt {
-	/*if p.match(PRINT) {
-		return p.PrintStatement()
-	}*/
-
 	if p.match(LEFT_BRACE) {
 		return Block{Statements: p.Block()}
 	}
@@ -493,18 +504,14 @@ func (p *Parser) IfStatement() Stmt {
 	return If{Condition: condition, ThenBranch: thenBranch, ElseBranch: elseBranch}
 }
 
-// while
 func (p *Parser) WhileStatement() Stmt {
 	p.consume(LEFT_PAREN, "Expect '(' after 'while'.")
 	condition := p.Expression()
 	p.consume(RIGHT_PAREN, "Expect ')' after while condition.")
-
 	body := p.Statement()
-
 	return While{Condition: condition, Body: body}
 }
 
-// for
 func (p *Parser) ForStatement() Stmt {
 	p.consume(LEFT_PAREN, "Expect '(' after 'for'.")
 	var initializer Stmt
@@ -588,17 +595,14 @@ func (p *Parser) finishCall(callee Expr) Expr {
 	return Call{Callee: callee, Paren: paren, Arguments: arguments, This: this}
 }
 
-/*
-func (p *Parser) PrintStatement() Stmt {
-	value := p.Expression()
-	p.consume(SEMICOLON, "Expect ';' after value.")
-	return Print{Expression: value}
-}*/
-
 func (p *Parser) ExpressionStatement() Stmt {
+	var stmt Stmt
+
 	expr := p.Expression()
 	p.consume(SEMICOLON, "Expect ';' after expression.")
-	return Expression{Expression: expr}
+	stmt = Expression{Expression: expr}
+
+	return stmt
 }
 
 func (p *Parser) Expression() Expr {
