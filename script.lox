@@ -1,5 +1,5 @@
 var persona{} = {
-    "nombre": "pepe",
+    "nombre": "pepe", 
     "apellido": "perez",
     "edad": 30,
     "direccion": {

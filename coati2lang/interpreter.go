@@ -420,11 +420,14 @@ func (i *Interpreter) VisitAssignExpr(expr Assign) interface{} {
 				path_var[index] = i.full_evaluate(selExpr)
 			}
 		}
-		_, err := i.setByPath(old, path_var, value)
+		new, err := i.setByPath(old, path_var, value)
 		if err != nil {
 			log.Fatalln(err)
 		}
-		//i.enviroment.Assign(expr.Name.Lexeme, new)
+		if expr.Name.Lexeme != "this" {
+			//TODO: verificar que funcione en todos los casos de uso
+			i.enviroment.Assign(expr.Name.Lexeme, new)
+		}
 		return value
 	} else {
 		i.enviroment.Assign(expr.Name.Lexeme, value)
