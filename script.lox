@@ -1,7 +1,7 @@
 var persona{} = {
-    nombre: "pepe"
-    apellido: "perez"
-    edad: 30
+    nombre: "pepe";
+    apellido: "perez";
+    edad: 30;
     
     direccion: {
         calle: "definir calle";
