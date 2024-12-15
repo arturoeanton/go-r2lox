@@ -25,31 +25,31 @@ Lox es un lenguaje de scripting dinámico, imperativo y orientado a objetos. Est
 ### Instalación
 
 Para clonar el repositorio y construir el intérprete, ejecuta los siguientes comandos:
-´´´
+```bash
     git clone https://github.com/arturoeanton/go-r2lox.git
     cd go-r2lox
     go build
-´´´
+```
 ### Ejecución
 
 Para ejecutar un archivo Lox, usa el siguiente comando:
-´´´
+```bash
     ./go-r2lox <ruta_al_archivo.lox>
-´´´
+```
 Por ejemplo, para ejecutar un archivo llamado `test.lox`, ejecuta:
-´´´
+```bash
     ./go-r2lox test.lox
-´´´
+```
 También puedes ejecutar el intérprete en modo REPL (Read-Eval-Print Loop) ejecutando simplemente:
-´´´
+```bash
     ./go-r2lox
-´´´
+```
 Esto te permitirá ingresar expresiones Lox directamente en la terminal.
 
 ### Ejemplos de código Lox
 
 Aquí hay un ejemplo simple de código Lox:
-´´´
+```
     print "Hola, mundo!";
 
     var a = 10;
@@ -61,7 +61,7 @@ Aquí hay un ejemplo simple de código Lox:
     }
 
     print add(5, 3);
-´´´
+```
 ## Estado del proyecto
 
 Este proyecto se encuentra en desarrollo y aún no implementa todas las características de Lox. Se planea seguir avanzando según lo propuesto en "Crafting Interpreters".
